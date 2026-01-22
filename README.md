@@ -2,21 +2,35 @@
 
 Official SDK for AuthSec authentication and role-based access control (RBAC).
 
-[![PyPI version](https://badge.fury.io/py/authsec.svg)](https://badge.fury.io/py/authsec)
-[![npm version](https://badge.fury.io/js/%40authsec%2Fsdk.svg)](https://www.npmjs.com/package/@authsec/sdk)
+[![PyPI version](https://badge.fury.io/py/authsec-authz-sdk.svg)](https://badge.fury.io/py/authsec-authz-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
 ## 📚 Package Contents
 
-This is a **complete distribution package** containing both the SDK code and documentation:
+This is a **complete distribution package** containing SDK code, documentation, tests, and examples:
 
 ### SDK Code
 - **`authsec/`** - Python package with AuthSecClient and AdminHelper
+  - `minimal.py` - AuthSecClient for authentication and authorization
+  - `admin_helper.py` - AdminHelper for RBAC management
 - **`pyproject.toml`** - Package metadata and configuration
 - **`requirements.txt`** - Dependencies
 - **`LICENSE`** - MIT License
+
+### Tests
+- **`tests/`** - Comprehensive unit test suite (44 tests)
+  - `test_authsec_client.py` - Tests for AuthSecClient
+  - `test_admin_helper.py` - Tests for AdminHelper
+  - Run with: `python3 -m unittest discover tests -v`
+
+### Examples
+- **`examples/`** - Working code examples
+  - `basic_auth.py` - Authentication and permission checking
+  - `role_management.py` - Role assignment and management
+  - `admin_rbac.py` - Complete RBAC workflow
+  - `environment_config.py` - Environment configuration examples
 
 ### Documentation
 1. **[README.md](README.md)** - This file: Overview and getting started
@@ -32,28 +46,31 @@ This is a **complete distribution package** containing both the SDK code and doc
 
 ### Installation
 
-**From PyPI:**
+**From Local Clone (Current Method):**
 ```bash
-pip install authsec
-```
+# Clone the repository
+git clone https://github.com/authsec-ai/authz-sdk.git
+cd authz-sdk
 
-**From This Package:**
-```bash
-# Install from distribution folder
-pip install .
-
-# Or in development mode
+# Install in development mode
 pip install -e .
 ```
 
-**See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.**
-
-**TypeScript/JavaScript:**
+**From GitHub (After files are pushed):**
 ```bash
-npm install @authsec/sdk
-# or
-yarn add @authsec/sdk
+# Will work once package files are committed and pushed
+pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
+
+**From PyPI (Coming Soon):**
+```bash
+# Not yet published
+pip install authsec-authz-sdk
+```
+
+> **Note:** The package files (pyproject.toml, authsec/, tests/, etc.) need to be committed and pushed to GitHub before the GitHub install method will work.
+
+**See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.**
 
 ### Python - Authentication Example
 
@@ -98,25 +115,6 @@ binding = admin.create_role_binding(
     user_id="user-uuid",
     role_id=role['id']
 )
-```
-
-### TypeScript - Example
-
-```typescript
-import { AuthSecClient } from '@authsec/sdk';
-
-const client = new AuthSecClient('https://api.authsec.dev');
-
-// Login
-const token = await client.login(
-    'user@example.com',
-    'password',
-    'client-id'
-);
-
-// Check permission
-const canRead = await client.checkPermission('document', 'read');
-console.log(canRead ? '✓ Can read' : '✗ Cannot read');
 ```
 
 ---
@@ -308,38 +306,20 @@ admin = AdminHelper(
 
 **Installation:**
 ```bash
-pip install authsec
+# Clone and install
+git clone https://github.com/authsec-ai/authz-sdk.git
+cd authz-sdk
+pip install -e .
 ```
 
-**From source:**
+**Or from GitHub (once files are pushed):**
 ```bash
-git clone https://github.com/authsec-ai/authsec-python-sdk.git
-cd authsec-python-sdk
-pip install -e .
+pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
 **With development dependencies:**
 ```bash
 pip install -e ".[dev]"
-```
-
-### TypeScript/JavaScript
-
-**Requirements:**
-- Node.js 14.0 or higher
-- `axios` (auto-installed)
-
-**Installation:**
-```bash
-npm install @authsec/sdk
-```
-
-**From source:**
-```bash
-git clone https://github.com/authsec-ai/authsec-typescript-sdk.git
-cd authsec-typescript-sdk
-npm install
-npm run build
 ```
 
 ---
@@ -379,13 +359,11 @@ except Exception as e:
 - **Swagger UI**: https://dev.api.authsec.dev/uflow/docs
 
 ### Source Code
-- **Python SDK**: https://github.com/authsec-ai/authsec-python-sdk
-- **TypeScript SDK**: https://github.com/authsec-ai/authsec-typescript-sdk
+- **Python SDK**: https://github.com/authsec-ai/authz-sdk
 - **Auth Manager**: https://github.com/authsec-ai/auth-manager
 
 ### Package Registries
-- **PyPI**: https://pypi.org/project/authsec/
-- **npm**: https://www.npmjs.com/package/@authsec/sdk
+- **PyPI**: https://pypi.org/project/authsec-authz-sdk/
 
 ### Support
 - **Issues**: GitHub repository issues
@@ -412,15 +390,155 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
+## 🧪 Testing & Examples
+
+### Running Tests
+
+The SDK includes a comprehensive test suite with **44 unit tests** covering all functionality:
+
+```bash
+# Run all tests
+python3 -m unittest discover tests -v
+
+# Run specific test file
+python3 -m unittest tests.test_authsec_client -v
+python3 -m unittest tests.test_admin_helper -v
+
+# Run with coverage (if pytest-cov installed)
+pip install pytest pytest-cov
+pytest tests/ --cov=authsec --cov-report=html
+```
+
+**Test Coverage:**
+- ✅ Authentication (login, OIDC exchange, token verification)
+- ✅ Permission checking (simple and scoped)
+- ✅ Role management (create, update, delete, list)
+- ✅ Role bindings (assign, remove, list)
+- ✅ Permission management
+- ✅ Scope management
+- ✅ Error handling
+- ✅ Environment configuration
+
+### Code Examples
+
+The `examples/` directory contains working examples for common use cases:
+
+#### 1. Basic Authentication ([examples/basic_auth.py](examples/basic_auth.py))
+
+```python
+from authsec import AuthSecClient
+
+# Login and check permissions
+client = AuthSecClient("https://dev.api.authsec.dev")
+token = client.login(email="user@example.com", password="pass", client_id="...")
+can_read = client.check_permission("document", "read")
+```
+
+**Topics covered:**
+- Client initialization
+- Email/password login
+- Permission checking
+- Scoped permissions
+- Pre-authenticated tokens
+- OIDC token exchange
+
+#### 2. Role Management ([examples/role_management.py](examples/role_management.py))
+
+```python
+# Assign roles to users
+binding = client.assign_role(user_id, role_id)
+
+# Scoped role assignment
+scoped_binding = client.assign_role(
+    user_id, role_id,
+    scope_type="project",
+    scope_id=project_id
+)
+
+# List and manage bindings
+bindings = client.list_role_bindings(user_id=user_id)
+```
+
+**Topics covered:**
+- Role assignment
+- Scoped roles
+- Conditional roles
+- Admin vs user endpoints
+- Listing role bindings
+
+#### 3. Admin RBAC Management ([examples/admin_rbac.py](examples/admin_rbac.py))
+
+```python
+from authsec import AdminHelper
+
+admin = AdminHelper(token="admin-token", endpoint_type="enduser")
+
+# Create permissions
+perm = admin.create_permission("document", "write", "Write documents")
+
+# Create role with permissions
+role = admin.create_role(
+    "Editor",
+    description="Can edit documents",
+    permission_strings=["document:read", "document:write"]
+)
+
+# Assign to user
+binding = admin.create_role_binding(user_id, role['id'])
+```
+
+**Topics covered:**
+- Permission creation
+- Role creation and management
+- Role bindings
+- Scope management
+- Admin vs enduser endpoints
+- Batch operations
+
+#### 4. Environment Configuration ([examples/environment_config.py](examples/environment_config.py))
+
+```python
+# Using environment variables
+admin = AdminHelper.from_env()
+
+# Multi-environment configuration
+# Production secret management
+# Using .env files
+```
+
+**Topics covered:**
+- Environment variable configuration
+- .env file usage
+- Production secret management
+- Multi-environment setup
+
+### Running Examples
+
+```bash
+# Run an example
+cd examples
+python3 basic_auth.py
+python3 role_management.py
+python3 admin_rbac.py
+python3 environment_config.py
+```
+
+**Note:** Update the examples with your actual credentials before running.
+
+---
+
 ## 🎓 Getting Started Checklist
 
-- [ ] Install SDK: `pip install authsec` or `npm install @authsec/sdk`
+- [ ] Clone repository: `git clone https://github.com/authsec-ai/authz-sdk.git`
+- [ ] Install SDK: `cd authz-sdk && pip install -e .`
 - [ ] Read [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md) for app integration
 - [ ] Read [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md) for RBAC management
 - [ ] Get your API credentials (client_id, tenant_id, admin_token)
 - [ ] Configure environment variables
 - [ ] Try the quick start examples
 - [ ] Explore the API documentation at https://docs.authsec.dev
+
+> **Note:** To enable `pip install git+https://...`, commit and push all files to GitHub. To publish to PyPI, see [PUBLISHING.md](PUBLISHING.md)
 
 ---
 

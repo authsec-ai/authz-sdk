@@ -1,0 +1,69 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "authsec-authz-sdk"
+version = "1.0.0"
+description = "AuthSec SDK for authentication and RBAC management"
+readme = "README.md"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+authors = [
+    {name = "AuthSec", email = "support@authsec.dev"}
+]
+keywords = ["authentication", "authorization", "rbac", "jwt", "oidc", "role-based-access-control", "authsec"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "mypy>=0.950",
+]
+
+[project.urls]
+Homepage = "https://authsec.dev"
+Documentation = "https://docs.authsec.dev"
+Repository = "https://github.com/authsec-ai/authz-sdk"
+Issues = "https://github.com/authsec-ai/authz-sdk/issues"
+Changelog = "https://github.com/authsec-ai/authz-sdk/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["authsec"]
+
+[tool.setuptools.package-data]
+authsec = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py37", "py38", "py39", "py310", "py311"]
+
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
