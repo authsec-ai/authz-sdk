@@ -1,8 +1,37 @@
 # AuthSec SDK Examples
 
-This directory contains working examples demonstrating how to use the AuthSec SDK for various use cases.
+Working examples demonstrating the AuthSec SDK.
 
-## 📚 Available Examples
+---
+
+## 🚀 Quick Setup
+
+### 1. Install the SDK
+
+```bash
+pip install git+https://github.com/authsec-ai/authz-sdk.git
+```
+
+### 2. Set Environment Variables
+
+Get credentials from https://dashboard.authsec.dev:
+
+```bash
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_CLIENT_ID="your-client-id"
+export AUTHSEC_TENANT_ID="your-tenant-id"
+export AUTHSEC_ADMIN_TOKEN="your-admin-token"  # For admin examples
+```
+
+### 3. Run Examples
+
+```bash
+python basic_auth.py
+```
+
+---
+
+## 📖 Available Examples
 
 ### 1. Basic Authentication (`basic_auth.py`)
 

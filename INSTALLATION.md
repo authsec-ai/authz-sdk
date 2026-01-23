@@ -1,67 +1,74 @@
-# Installation Guide
+# Installation & Setup Guide
 
-Quick guide for installing the AuthSec SDK.
+Complete guide for installing and configuring the AuthSec SDK.
 
 ---
 
-## Installation
-
-Install directly from GitHub:
+## Step 1: Install the SDK
 
 ```bash
 pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
-This command installs the latest version from the main branch.
+**Requirements:**
+- Python 3.7 or higher
+- `requests` library (auto-installed)
 
 ---
 
-## For Contributors & Developers
+## Step 2: Get Your Credentials
 
-If you want to contribute or modify the SDK:
+Obtain these from your AuthSec dashboard at https://dashboard.authsec.dev:
+
+1. **API URL** - Your AuthSec API endpoint (e.g., `https://api.authsec.dev`)
+2. **Client ID** - Your application's client identifier
+3. **Tenant ID** - Your organization's tenant identifier
+4. **Admin Token** - Required only for RBAC management operations
+
+---
+
+## Step 3: Configure Environment Variables
+
+### Option A: Export as Shell Variables
 
 ```bash
-# Clone the repository
-git clone https://github.com/authsec-ai/authz-sdk.git
-cd authz-sdk
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_CLIENT_ID="your-client-id"
+export AUTHSEC_TENANT_ID="your-tenant-id"
+export AUTHSEC_ADMIN_TOKEN="your-admin-token"  # Only for admin operations
+```
 
-# Install in development mode (changes reflected immediately)
-pip install -e .
+### Option B: Create a `.env` File
 
-# Install with development dependencies
-pip install -e ".[dev]"
+```bash
+# .env
+AUTHSEC_API_URL=https://api.authsec.dev
+AUTHSEC_CLIENT_ID=your-client-id
+AUTHSEC_TENANT_ID=your-tenant-id
+AUTHSEC_ADMIN_TOKEN=your-admin-token
+```
+
+Then load it in your code:
+
+```python
+from dotenv import load_dotenv
+load_dotenv()  # Loads .env file
+```
+
+### Option C: Set in Python Code
+
+```python
+import os
+
+os.environ['AUTHSEC_API_URL'] = 'https://api.authsec.dev'
+os.environ['AUTHSEC_CLIENT_ID'] = 'your-client-id'
+os.environ['AUTHSEC_TENANT_ID'] = 'your-tenant-id'
+os.environ['AUTHSEC_ADMIN_TOKEN'] = 'your-admin-token'
 ```
 
 ---
 
-## Package Contents
-
-This distribution package contains:
-
-```
-authz-sdk/
-├── README.md                              # Main overview and navigation
-├── AUTHENTICATION_AUTHORIZATION_GUIDE.md  # Complete guide for AuthSecClient
-├── ADMIN_HELPER_GUIDE.md                  # Complete guide for AdminHelper
-├── INSTALLATION.md                        # This file
-├── authsec/                               # Python package
-│   ├── __init__.py                        # Package initialization
-│   ├── minimal.py                         # AuthSecClient implementation
-│   └── admin_helper.py                    # AdminHelper implementation
-├── pyproject.toml                         # Package metadata and dependencies
-├── requirements.txt                       # Dependencies list
-├── LICENSE                                # MIT License
-├── CHANGELOG.md                           # Version history
-├── MANIFEST.in                            # Package manifest
-└── PUBLISHING.md                          # Publishing guide
-
-```
-
----
-
-## Quick Verification
-
-After installation (using any method above), verify the SDK is working:
+## Step 4: Verify Installation
 
 ```python
 # Test import
@@ -71,97 +78,76 @@ print("✓ AuthSec SDK imported successfully")
 # Check version
 import authsec
 print(f"Version: {authsec.__version__}")
-print(f"Package: authsec-authz-sdk")
-
-# Initialize client (will fail without valid URL, but tests import)
-try:
-    client = AuthSecClient("https://api.authsec.dev")
-    print("✓ AuthSecClient initialized")
-except Exception as e:
-    print(f"✓ SDK working (expected error without credentials)")
 ```
 
 ---
 
-## Environment Setup
+## What to Do Next?
 
-### 1. Create Environment File
+### For Application Developers (Authentication & Authorization)
 
-```bash
-cp .env.example .env
-```
+Use **`AuthSecClient`** to:
+- Authenticate users (login/logout)
+- Check user permissions
+- Verify access to resources
 
-### 2. Configure Variables
+**📖 Read the complete guide:** [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md)
 
-Edit `.env` with your credentials:
-
-```bash
-# Authentication SDK
-AUTH_BASE_URL=https://api.authsec.dev
-CLIENT_ID=your-client-id
-
-# Admin SDK
-ADMIN_TOKEN=your-admin-token
-ADMIN_BASE_URL=https://api.authsec.dev
-ENDPOINT_TYPE=enduser  # or "admin"
-```
-
-### 3. Load in Your Application
-
+**Quick example:**
 ```python
+from authsec import AuthSecClient
 import os
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+client = AuthSecClient(os.getenv('AUTHSEC_API_URL'))
+token = client.login(
+    email="user@example.com",
+    password="password",
+    client_id=os.getenv('AUTHSEC_CLIENT_ID')
+)
+```
 
-# Use in SDK
-from authsec import AuthSecClient, AdminHelper
+### For Administrators (RBAC Management)
 
-client = AuthSecClient(os.getenv("AUTH_BASE_URL"))
-admin = AdminHelper.from_env()
+Use **`AdminHelper`** to:
+- Create and manage roles
+- Define permissions
+- Assign roles to users
+- Manage scopes
+
+**📖 Read the complete guide:** [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md)
+
+**Quick example:**
+```python
+from authsec import AdminHelper
+import os
+
+admin = AdminHelper(
+    token=os.getenv('AUTHSEC_ADMIN_TOKEN'),
+    endpoint_type="admin"
+)
+role = admin.create_role(
+    name="Editor",
+    permission_strings=["document:read", "document:write"]
+)
 ```
 
 ---
 
-## Dependencies
+## Running Examples
 
-The SDK requires:
-
-- **Python**: 3.7 or higher
-- **requests**: 2.25.0 or higher (automatically installed)
-
-### Optional Development Dependencies
+The SDK includes working examples:
 
 ```bash
-pip install authsec[dev]
-```
+# Clone the repo to access examples
+git clone https://github.com/authsec-ai/authz-sdk.git
+cd authz-sdk/examples
 
-Includes:
-- pytest (testing)
-- pytest-cov (coverage)
-- black (formatting)
-- mypy (type checking)
+# Set your environment variables first
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_CLIENT_ID="your-client-id"
 
----
-
-## Building from Source
-
-If you want to build the package yourself:
-
-```bash
-# Install build tools
-pip install build
-
-# Build the package
-python -m build
-
-# This creates:
-# dist/authsec-1.0.0.tar.gz
-# dist/authsec-1.0.0-py3-none-any.whl
-
-# Install the wheel
-pip install dist/authsec-1.0.0-py3-none-any.whl
+# Run an example
+python basic_auth.py
 ```
 
 ---
@@ -172,9 +158,7 @@ pip install dist/authsec-1.0.0-py3-none-any.whl
 
 **Solution:**
 ```bash
-pip install authsec
-# or
-pip install -e .  # if in the distribution folder
+pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
 ### Import Error: No module named 'requests'
@@ -182,17 +166,6 @@ pip install -e .  # if in the distribution folder
 **Solution:**
 ```bash
 pip install requests>=2.25.0
-```
-
-### SSL Certificate Errors
-
-**Solution:**
-```python
-# For development only - not recommended for production
-import urllib3
-urllib3.disable_warnings()
-
-client = AuthSecClient("https://api.authsec.dev")
 ```
 
 ### Connection Timeout
@@ -204,27 +177,12 @@ client = AuthSecClient(
     "https://api.authsec.dev",
     timeout=30.0  # seconds
 )
-
-admin = AdminHelper(
-    token="token",
-    timeout=30  # seconds
-)
 ```
-
----
-
-## Next Steps
-
-After installation:
-
-1. **For Application Developers**: Read [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md)
-2. **For Administrators**: Read [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md)
-3. **For Overview**: Read [README.md](README.md)
 
 ---
 
 ## Support
 
 - **Documentation**: https://docs.authsec.dev
-- **Issues**: https://github.com/authsec-ai/authsec-python-sdk/issues
+- **Issues**: https://github.com/authsec-ai/authz-sdk/issues
 - **Email**: support@authsec.dev

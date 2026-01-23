@@ -42,42 +42,61 @@ Complete guide for using `AuthSecClient` to add authentication and authorization
 
 ## Installation
 
-### Python
-
 ```bash
-pip install authsec
+pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
 **Requirements:**
 - Python 3.7 or higher
 - `requests` library (auto-installed)
 
-### TypeScript/JavaScript
+---
+
+## Environment Setup
+
+Set these environment variables (get from https://dashboard.authsec.dev):
 
 ```bash
-npm install @authsec/sdk
-# or
-yarn add @authsec/sdk
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_CLIENT_ID="your-client-id"
+export AUTHSEC_TENANT_ID="your-tenant-id"
 ```
 
-**Requirements:**
-- Node.js 14.0 or higher
-- `axios` (auto-installed)
+Or in Python:
+
+```python
+import os
+os.environ['AUTHSEC_API_URL'] = 'https://api.authsec.dev'
+os.environ['AUTHSEC_CLIENT_ID'] = 'your-client-id'
+os.environ['AUTHSEC_TENANT_ID'] = 'your-tenant-id'
+```
 
 ---
 
 ## Quick Start
 
-### Python Example
-
 ```python
 from authsec import AuthSecClient
+import os
 
 # 1. Initialize client
-client = AuthSecClient("https://api.authsec.dev")
+client = AuthSecClient(os.getenv('AUTHSEC_API_URL'))
 
-# 2. Set authentication token (from OIDC or other source)
-client.set_token("your-jwt-token")
+# 2. Login with user credentials
+token = client.login(
+    email="user@example.com",
+    password="user-password",
+    client_id=os.getenv('AUTHSEC_CLIENT_ID')
+)
+
+# 3. Check permissions
+if client.check_permission("document", "read"):
+    print("✓ User can read documents")
+else:
+    print("✗ Access denied")
+```
+
+**That's it!** Continue reading for detailed usage.
 
 # 3. Check permissions
 if client.check_permission("document", "read"):

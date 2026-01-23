@@ -1,72 +1,81 @@
-# AuthSec SDK - Distribution Package
+# AuthSec SDK
 
-Official SDK for AuthSec authentication and role-based access control (RBAC).
+Official Python SDK for AuthSec authentication and role-based access control (RBAC).
 
-[![PyPI version](https://badge.fury.io/py/authsec-authz-sdk.svg)](https://badge.fury.io/py/authsec-authz-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## 📚 Package Contents
+## 🚀 Getting Started (3 Steps)
 
-This is a **complete distribution package** containing SDK code, documentation, tests, and examples:
-
-### SDK Code
-- **`authsec/`** - Python package with AuthSecClient and AdminHelper
-  - `minimal.py` - AuthSecClient for authentication and authorization
-  - `admin_helper.py` - AdminHelper for RBAC management
-- **`pyproject.toml`** - Package metadata and configuration
-- **`requirements.txt`** - Dependencies
-- **`LICENSE`** - MIT License
-
-### Tests
-- **`tests/`** - Comprehensive unit test suite (44 tests)
-  - `test_authsec_client.py` - Tests for AuthSecClient
-  - `test_admin_helper.py` - Tests for AdminHelper
-  - Run with: `python3 -m unittest discover tests -v`
-
-### Examples
-- **`examples/`** - Working code examples
-  - `basic_auth.py` - Authentication and permission checking
-  - `role_management.py` - Role assignment and management
-  - `admin_rbac.py` - Complete RBAC workflow
-  - `environment_config.py` - Environment configuration examples
-
-### Documentation
-1. **[README.md](README.md)** - This file: Overview and getting started
-2. **[INSTALLATION.md](INSTALLATION.md)** - Installation and setup guide
-3. **[AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md)** - Complete guide for authentication and authorization using `AuthSecClient`
-4. **[ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md)** - Complete guide for RBAC management using `AdminHelper`
-5. **[PUBLISHING.md](PUBLISHING.md)** - Guide for publishing to PyPI (for maintainers)
-6. **[CHANGELOG.md](CHANGELOG.md)** - Version history and updates
-
----
-
-## 🚀 Quick Start
-
-### Installation
+### Step 1: Install the SDK
 
 ```bash
 pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
-That's it! The package will be installed directly from GitHub.
+### Step 2: Set Up Your Environment
 
-**See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.**
+You need these credentials from your AuthSec dashboard:
 
-### Python - Authentication Example
+```bash
+# For regular authentication (AuthSecClient)
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_CLIENT_ID="your-client-id"
+export AUTHSEC_TENANT_ID="your-tenant-id"
+
+# For admin operations (AdminHelper)
+export AUTHSEC_ADMIN_TOKEN="your-admin-token"
+```
+
+**Or set them in your Python code:**
+
+```python
+import os
+os.environ['AUTHSEC_API_URL'] = 'https://api.authsec.dev'
+os.environ['AUTHSEC_CLIENT_ID'] = 'your-client-id'
+os.environ['AUTHSEC_TENANT_ID'] = 'your-tenant-id'
+```
+
+### Step 3: Choose Your SDK
+
+**Option A: Use `AuthSecClient` for Authentication & Authorization**
+- For application developers
+- Handle user login, check permissions
+- See [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md)
+
+**Option B: Use `AdminHelper` for RBAC Management**
+- For administrators and DevOps
+- Create roles, manage permissions, assign user access
+- See [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md)
+
+---
+
+## 📖 Complete Documentation
+
+- **[INSTALLATION.md](INSTALLATION.md)** - Installation details
+- **[AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md)** - AuthSecClient guide
+- **[ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md)** - AdminHelper guide
+- **[examples/](examples/)** - Working code examples
+
+---
+
+## 🎯 Quick Examples
+
+### AuthSecClient - User Authentication
 
 ```python
 from authsec import AuthSecClient
+import os
 
-# Initialize client
-client = AuthSecClient("https://api.authsec.dev")
+# Initialize with your API URL
+client = AuthSecClient(os.getenv('AUTHSEC_API_URL'))
 
 # Login with credentials
 token = client.login(
     email="user@example.com",
     password="your-password",
-    client_id="your-client-id"
+    client_id=os.getenv('AUTHSEC_CLIENT_ID')
 )
 
 # Check permissions
@@ -74,14 +83,17 @@ if client.check_permission("document", "read"):
     print("✓ User can read documents")
 ```
 
-### Python - Admin RBAC Example
+**Next Steps:** Read [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md) for complete usage.
+
+### AdminHelper - RBAC Management
 
 ```python
 from authsec import AdminHelper
+import os
 
 # Initialize with admin token
 admin = AdminHelper(
-    token="your-admin-token",
+    token=os.getenv('AUTHSEC_ADMIN_TOKEN'),
     endpoint_type="admin"
 )
 
@@ -98,6 +110,8 @@ binding = admin.create_role_binding(
     role_id=role['id']
 )
 ```
+
+**Next Steps:** Read [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md) for complete RBAC management.
 
 ---
 
@@ -496,15 +510,20 @@ python3 environment_config.py
 
 ---
 
-## 🎓 Getting Started Checklist
+## ✅ Getting Started Checklist
 
-- [ ] Install SDK: `pip install git+https://github.com/authsec-ai/authz-sdk.git`
-- [ ] Read [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md) for app integration
-- [ ] Read [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md) for RBAC management
-- [ ] Get your API credentials (client_id, tenant_id, admin_token)
-- [ ] Configure environment variables
-- [ ] Try the quick start examples (see `examples/` directory)
-- [ ] Explore the API documentation at https://docs.authsec.dev
+- [ ] **Install**: Run `pip install git+https://github.com/authsec-ai/authz-sdk.git`
+- [ ] **Get Credentials**: Obtain from AuthSec dashboard:
+  - API URL
+  - Client ID
+  - Tenant ID  
+  - Admin Token (for RBAC operations)
+- [ ] **Set Environment Variables**: Export credentials as env vars
+- [ ] **Choose Your Path**:
+  - Building an app? → Use `AuthSecClient` ([guide](AUTHENTICATION_AUTHORIZATION_GUIDE.md))
+  - Managing access? → Use `AdminHelper` ([guide](ADMIN_HELPER_GUIDE.md))
+- [ ] **Run Examples**: Try code in `examples/` directory
+- [ ] **Explore API Docs**: https://docs.authsec.dev
 
 ---
 

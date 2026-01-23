@@ -56,27 +56,71 @@ Complete guide for using `AdminHelper` to manage RBAC resources (roles, permissi
 
 ## Installation
 
-### Python
-
 ```bash
-pip install authsec
+pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
 **Requirements:**
 - Python 3.7 or higher
 - `requests` library (auto-installed)
 
-### From Source
+---
+
+## Environment Setup
+
+Set these environment variables (get from https://dashboard.authsec.dev):
 
 ```bash
-git clone https://github.com/authsec-ai/authsec-python-sdk.git
-cd authsec-python-sdk
-pip install -e .
+export AUTHSEC_API_URL="https://api.authsec.dev"
+export AUTHSEC_ADMIN_TOKEN="your-admin-token"
+export AUTHSEC_TENANT_ID="your-tenant-id"
+```
+
+Or in Python:
+
+```python
+import os
+os.environ['AUTHSEC_API_URL'] = 'https://api.authsec.dev'
+os.environ['AUTHSEC_ADMIN_TOKEN'] = 'your-admin-token'
+os.environ['AUTHSEC_TENANT_ID'] = 'your-tenant-id'
 ```
 
 ---
 
 ## Quick Start
+
+```python
+from authsec import AdminHelper
+import os
+
+# 1. Initialize with admin token
+admin = AdminHelper(
+    token=os.getenv('AUTHSEC_ADMIN_TOKEN'),
+    endpoint_type="admin"  # or "enduser" for tenant operations
+)
+
+# 2. Create a permission
+permission = admin.create_permission(
+    resource="document",
+    action="read",
+    description="Read documents"
+)
+
+# 3. Create a role with permissions
+role = admin.create_role(
+    name="Viewer",
+    description="Can view documents",
+    permission_strings=["document:read"]
+)
+
+# 4. Assign role to user
+binding = admin.create_role_binding(
+    user_id="user-uuid",
+    role_id=role['id']
+)
+```
+
+**That's it!** Continue reading for detailed RBAC management.
 
 ### Python Example
 
