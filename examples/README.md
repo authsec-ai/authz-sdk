@@ -140,15 +140,8 @@ config = environments[env]
 
 ### 1. Install the SDK
 
-**From GitHub:**
 ```bash
 pip install git+https://github.com/authsec-ai/authz-sdk.git
-```
-
-**Or from local clone (for development):**
-```bash
-cd ..
-pip install -e .
 ```
 
 ### 2. Set Up Credentials

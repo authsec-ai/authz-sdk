@@ -1,14 +1,24 @@
 # Installation Guide
 
-Quick guide for installing and using the AuthSec SDK from this distribution package.
+Quick guide for installing the AuthSec SDK.
 
 ---
 
-## Installation Methods
+## Installation
 
-### Method 1: Install from Local Clone (Current Method)
+Install directly from GitHub:
 
-Since the package files haven't been pushed to GitHub yet, install from a local clone:
+```bash
+pip install git+https://github.com/authsec-ai/authz-sdk.git
+```
+
+This command installs the latest version from the main branch.
+
+---
+
+## For Contributors & Developers
+
+If you want to contribute or modify the SDK:
 
 ```bash
 # Clone the repository
@@ -18,34 +28,9 @@ cd authz-sdk
 # Install in development mode (changes reflected immediately)
 pip install -e .
 
-# Or regular install
-pip install .
+# Install with development dependencies
+pip install -e ".[dev]"
 ```
-
-### Method 2: Install from GitHub (After Pushing Files)
-
-Once the package files are committed and pushed to GitHub:
-
-```bash
-pip install git+https://github.com/authsec-ai/authz-sdk.git
-```
-
-**To enable this method, run:**
-```bash
-git add .
-git commit -m "Add package files and SDK implementation"
-git push origin main
-```
-
-### Method 3: Install from PyPI (Coming Soon)
-
-Once published to PyPI:
-
-```bash
-pip install authsec-authz-sdk
-```
-
-> **Note:** See [PUBLISHING.md](PUBLISHING.md) for instructions on publishing to PyPI.
 
 ---
 

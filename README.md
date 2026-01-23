@@ -46,29 +46,11 @@ This is a **complete distribution package** containing SDK code, documentation, 
 
 ### Installation
 
-**From Local Clone (Current Method):**
 ```bash
-# Clone the repository
-git clone https://github.com/authsec-ai/authz-sdk.git
-cd authz-sdk
-
-# Install in development mode
-pip install -e .
-```
-
-**From GitHub (After files are pushed):**
-```bash
-# Will work once package files are committed and pushed
 pip install git+https://github.com/authsec-ai/authz-sdk.git
 ```
 
-**From PyPI (Coming Soon):**
-```bash
-# Not yet published
-pip install authsec-authz-sdk
-```
-
-> **Note:** The package files (pyproject.toml, authsec/, tests/, etc.) need to be committed and pushed to GitHub before the GitHub install method will work.
+That's it! The package will be installed directly from GitHub.
 
 **See [INSTALLATION.md](INSTALLATION.md) for detailed setup instructions.**
 
@@ -306,20 +288,7 @@ admin = AdminHelper(
 
 **Installation:**
 ```bash
-# Clone and install
-git clone https://github.com/authsec-ai/authz-sdk.git
-cd authz-sdk
-pip install -e .
-```
-
-**Or from GitHub (once files are pushed):**
-```bash
 pip install git+https://github.com/authsec-ai/authz-sdk.git
-```
-
-**With development dependencies:**
-```bash
-pip install -e ".[dev]"
 ```
 
 ---
@@ -529,16 +498,13 @@ python3 environment_config.py
 
 ## 🎓 Getting Started Checklist
 
-- [ ] Clone repository: `git clone https://github.com/authsec-ai/authz-sdk.git`
-- [ ] Install SDK: `cd authz-sdk && pip install -e .`
+- [ ] Install SDK: `pip install git+https://github.com/authsec-ai/authz-sdk.git`
 - [ ] Read [AUTHENTICATION_AUTHORIZATION_GUIDE.md](AUTHENTICATION_AUTHORIZATION_GUIDE.md) for app integration
 - [ ] Read [ADMIN_HELPER_GUIDE.md](ADMIN_HELPER_GUIDE.md) for RBAC management
 - [ ] Get your API credentials (client_id, tenant_id, admin_token)
 - [ ] Configure environment variables
-- [ ] Try the quick start examples
+- [ ] Try the quick start examples (see `examples/` directory)
 - [ ] Explore the API documentation at https://docs.authsec.dev
-
-> **Note:** To enable `pip install git+https://...`, commit and push all files to GitHub. To publish to PyPI, see [PUBLISHING.md](PUBLISHING.md)
 
 ---
 
