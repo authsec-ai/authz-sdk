@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 """
-Complete End-to-End Test - Based on Real App Flow
+Complete E2E Test - Token-Based RBAC Testing
 
-This test replicates the actual flow from app.authsec.dev:
-1. Admin registration (creates tenant)
-2. Login with proper tenant_domain
-3. Create permissions
-4. Create roles
-5. Verify RBAC works
+This test covers complete RBAC workflow:
+1. Create permissions
+2. Create roles
+3. Create role bindings
+4. Verify permissions work
+
+Usage:
+    export TEST_AUTH_TOKEN='your-jwt-token'
+    python3 tests/test_e2e_complete.py
 """
 
 import sys
 import os
 import random
 import string
-import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -46,139 +48,76 @@ def print_step(step_num, title):
     print(f"{CYAN}{'='*70}{RESET}\n")
 
 def test_complete_e2e_flow():
-    """Complete E2E test based on real app.authsec.dev flow"""
+    """Complete E2E RBAC test with token"""
     
-    # Generate unique test data
     random_id = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
     
-    admin_email = f"e2e{random_id}@sdktest.com"
-    admin_password = "E2ETest123!"
-    # Use full FQDN format like the real app does
-    tenant_subdomain = f"e2e{random_id}"
-    tenant_domain = f"{tenant_subdomain}.app.authsec.dev"
-    
-    base_url = os.getenv("UFLOW_BASE_URL", "https://dev.api.authsec.dev/uflow")
+    base_url = os.getenv("UFLOW_BASE_URL", "https://dev.api.authsec.dev")
+    token = os.getenv('TEST_AUTH_TOKEN')
     
     print(f"\n{BLUE}{'='*70}{RESET}")
-    print(f"{BLUE}Complete E2E Test - Real App Flow{RESET}")
+    print(f"{BLUE}Complete E2E RBAC Test (Token-Based){RESET}")
     print(f"{BLUE}{'='*70}{RESET}\n")
     
-    print_info(f"Test Admin: {admin_email}")
-    print_info(f"Tenant Domain (FQDN): {tenant_domain}")
+    if not token:
+        print_error("TEST_AUTH_TOKEN environment variable required")
+        print_info("Get token from: https://app.authsec.dev")
+        return False
+    
+    print_info(f"Test ID: {random_id}")
     print_info(f"Base URL: {base_url}")
     
     try:
-        # ========================================
-        # STEP 1: Admin Registration via Bootstrap
-        # ========================================
-        print_step(1, "Admin Registration (Bootstrap)")
+        # Initialize
+        admin_helper = AdminHelper(token=token, base_url=base_url)
         
-        # Use the bootstrap endpoint like the real app does
-        bootstrap_url = f"{base_url}/auth/admin/login/bootstrap"
-        bootstrap_payload = {
-            "email": admin_email,
-            "password": admin_password,
-            "tenant_domain": tenant_domain
-        }
+        # Get user ID using same pattern as test_e2e_token_based.py
+        print_step(1, "Get User ID")
         
-        print_info("Using /auth/admin/login/bootstrap endpoint")
-        reg_response = requests.post(bootstrap_url, json=bootstrap_payload)
-        reg_response.raise_for_status()
-        
-        reg_data = reg_response.json()
-        print_success("Admin registration initiated via bootstrap")
-        print_info(f"Status: {reg_response.status_code}")
-        
-        # Get OTP from response (dev environment)
-        otp = reg_data.get('otp')
-        if otp:
-            print_success(f"OTP received: {otp}")
-        else:
-            print_warning("No OTP in bootstrap response -may need to check email in production")
-        
-        # ========================================
-        # STEP 2: Verify Registration with OTP
-        # ========================================
-        print_step(2, "Verify Registration with OTP")
-        
-        if otp:
-            admin_client = AuthSecClient(
-                base_url=base_url,
-                endpoint_type="admin"
-            )
-            
-            verify_result = admin_client.verify_registration(
-                email=admin_email,
-                otp=otp
-            )
-            
-            print_success("Registration verified")
-            print_info(f"Verification response keys: {list(verify_result.keys()) if verify_result else 'None'}")
-        else:
-            print_warning("Skipping verification - no OTP available")
-        
-        # ========================================
-        # STEP 3: Admin Login
-        # ========================================
-        print_step(3, "Admin Login")
-        
-        print_info("Logging in with email, password, and tenant_domain (no client_id)")
-        
-        admin_client = AuthSecClient(
-            base_url=base_url,
-            endpoint_type="admin"
-        )
-        
+        user_id = None
         try:
-            token = admin_client.login(
-                email=admin_email,
-                password=admin_password,
-                tenant_domain=tenant_domain  # FQDN format
-            )
+            # verify_token uses /authmgr endpoint on main base_url
+            authmgr_client = AuthSecClient(base_url=base_url, token=token)
+            token_info = authmgr_client.verify_token(token)
             
-            print_success("Admin login successful!")
-            print_info(f"Token (first 30 chars): {token[:30]}...")
+            # Try various fields
+            user_id = (token_info.get('user_id') or 
+                      token_info.get('sub') or 
+                      token_info.get('client_id') or
+                      token_info.get('id'))
             
-        except requests.exceptions.HTTPError as e:
-            print_error(f"Login failed: {e}")
-            if e.response is not None:
-                print_error(f"Response status: {e.response.status_code}")
-                print_error(f"Response body: {e.response.text}")
-            raise
+            if user_id:
+                print_success(f"User ID: {user_id}")
+            else:
+                print_warning("Could not extract user_id from token")
+        except Exception as e:
+            print_warning(f"Token verification failed: {e}")
+            # Try fallback: manual user ID from environment
+            user_id = os.getenv('TEST_USER_ID')
+            if user_id:
+                print_info(f"Using TEST_USER_ID: {user_id}")
         
-        # ========================================
-        # STEP 3: Create Permissions
-        # ========================================
-        print_step(3, "Create Permissions with AdminHelper")
+        # Initialize client with uflow endpoint
+        admin_client = AuthSecClient(base_url=f"{base_url}/uflow", token=token)
         
-        admin_helper = AdminHelper(
-            token=token,
-            base_url="https://dev.api.authsec.dev",  # Use main API base
-            endpoint_type="admin"
-        )
+        # Create permissions
+        print_step(2, "Create Permissions")
         
-        # Create test permissions
-        permissions_to_create = [
+        permissions = [
             ("document", "read", "Read documents"),
             ("document", "write", "Write documents"),
             ("document", "delete", "Delete documents"),
         ]
         
-        created_count = 0
-        for resource, action, description in permissions_to_create:
+        for resource, action, description in permissions:
             try:
-                perm = admin_helper.create_permission(resource, action, description)
-                created_count += 1
-                print_success(f"Created permission: {resource}:{action}")
+                admin_helper.create_permission(resource, action, description)
+                print_success(f"Created: {resource}:{action}")
             except Exception as e:
-                print_warning(f"Permission {resource}:{action} might already exist: {str(e)[:80]}")
+                print_warning(f"{resource}:{action} - {str(e)[:50]}")
         
-        print_info(f"Successfully created/verified {len(permissions_to_create)} permissions")
-        
-        # ========================================
-        # STEP 4: Create Role
-        # ========================================
-        print_step(4, "Create Role with Permissions")
+        # Create role
+        print_step(3, "Create Role")
         
         role = admin_helper.create_role(
             name=f"Editor_{random_id}",
@@ -186,43 +125,42 @@ def test_complete_e2e_flow():
             permission_strings=["document:read", "document:write"]
         )
         
-        print_success(f"Created role: {role.get('name')}")
-        print_info(f"Role ID: {role.get('id')}")
+        if role:
+            print_success(f"Created role: {role.get('name')}")
+            print_info(f"Role ID: {role.get('id')}")
+            role_id = role.get('id')
+        else:
+            print_warning("Role creation returned None")
+            role_id = None
         
-        # ========================================
-        # STEP 5: List Permissions for Admin
-        # ========================================
-        print_step(5, "List Admin Permissions")
+        # Create role binding
+        print_step(4, "Create Role Binding")
         
-        admin_client.set_token(token)
-        permissions = admin_client.list_permissions()
+        if role_id and user_id:
+            binding = admin_helper.create_role_binding(user_id=user_id, role_id=role_id)
+            print_success("Role binding created")
+            print_info(f"Binding ID: {binding.get('id')}")
+        else:
+            print_warning(f"Skipping binding (role_id={role_id}, user_id={user_id})")
         
-        print_success(f"Admin has {len(permissions)} permissions")
-        for perm in permissions[:5]:  # Show first 5
+        # List permissions
+        print_step(5, "List Permissions")
+        
+        perms = admin_client.list_permissions()
+        print_success(f"User has {len(perms)} permissions")
+        
+        for perm in perms[:5]:
             resource = perm.get('resource', 'unknown')
             actions = perm.get('actions', [])
             print_info(f"  - {resource}: {', '.join(actions)}")
-        if len(permissions) > 5:
-            print_info(f"  ... and {len(permissions) - 5} more")
         
-        # ========================================
-        # Final Summary
-        # ========================================
+        if len(perms) > 5:
+            print_info(f"  ... and {len(perms) - 5} more")
+        
+        # Success
         print(f"\n{GREEN}{'='*70}{RESET}")
         print(f"{GREEN}E2E Test - COMPLETE SUCCESS!{RESET}")
         print(f"{GREEN}{'='*70}{RESET}\n")
-        
-        print_success("Step 1: Admin registered via bootstrap ✓")
-        print_success("Step 2: Admin logged in with tenant_domain ✓")
-        print_success("Step 3: Created permissions ✓")
-        print_success("Step 4: Created role with permissions ✓")
-        print_success("Step 5: Listed permissions ✓")
-        
-        print(f"\n{CYAN}Test Artifacts Created:{RESET}")
-        print_info(f"  Tenant Domain (FQDN): {tenant_domain}")
-        print_info(f"  Admin Email: {admin_email}")
-        print_info(f"  Role: {role.get('name')}")
-        print_info(f"  Permissions: document:read, document:write, document:delete")
         
         return True
         

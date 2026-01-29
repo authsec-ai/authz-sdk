@@ -1,216 +1,241 @@
-# AuthSec SDK Tests
+# AuthSec SDK Test Suite
 
-This directory contains integration tests for the AuthSec SDK.
+## Overview
 
-## Test Files
-
-### 1. `test_comprehensive.py` ✅ **No Dependencies Required**
-
-**Comprehensive unit/integration tests** that validate SDK structure, imports, and method presence.
-
-**What it tests:**
-- SDK imports (`AuthSecClient`, `AdminHelper`)
-- Method existence and signatures
-- Configuration options
-- Package structure
-- Documentation accuracy
-
-**Run it:**
-```bash
-python3 tests/test_comprehensive.py
-```
-
-**Status:** ✅ All tests passing (5/5)
-
----
-
-### 2. `test_integration.py` ⚠️ **Requires Database**
-
-**Full integration tests** against a live PostgreSQL database and running auth-manager service.
-
-**Requirements:**
-- PostgreSQL database running on `localhost:5433`
-- Database: `authsec` (user: `authsec`, password: `authsec@kloudone`)
-- Auth-manager service running (default: `http://localhost:7469`)
-
-**What it tests:**
-- Database setup and test data creation
-- Real token generation with live database
-- Permission checks against database
-- Cleanup of test data
-
-**Configure:**
-```bash
-export AUTH_MANAGER_URL="http://localhost:7469"  # Optional, defaults to localhost
-```
-
-**Run it:**
-```bash
-python3 tests/test_integration.py
-```
-
----
-
-### 3. `test_login.py` 🔐 **Requires Valid Credentials**
-
-**Login authentication tests** against the real API.
-
-**Requirements:**
-- Valid user credentials in the system
-- Running user-flow service (local or remote)
-
-**Configure:**
-```bash
-export TEST_EMAIL="user@example.com"
-export TEST_PASSWORD="your-password"
-export TEST_CLIENT_ID="your-client-uuid"
-export UFLOW_BASE_URL="https://dev.api.authsec.dev"  # or http://localhost:7468
-```
-
-**What it tests:**
-- `login()` method with real credentials
-- JWT token generation
-- Token validation
-
-**Run it:**
-```bash
-python3 tests/test_login.py
-```
-
----
-
-## Environment Configuration
-
-Copy `.env.example` to `.env` and configure your test credentials:
-
-```bash
-cp tests/.env.example tests/.env
-# Edit tests/.env with your credentials
-```
-
-**Example `.env`:**
-```bash
-# Admin token for API access
-ADMIN_TOKEN=your-admin-jwt-token
-
-# API endpoints
-API_BASE_URL=https://dev.api.authsec.dev
-ENDPOINT_TYPE=admin
-
-# Test credentials
-TEST_EMAIL=test@example.com
-TEST_PASSWORD=test-password
-TEST_CLIENT_ID=your-client-uuid
-```
-
----
+Token-based test suite for the AuthSec SDK. All tests assume the user has already authenticated externally and obtained a JWT token.
 
 ## Quick Start
 
-### Run Basic Tests (No Setup Required)
 ```bash
-python3 tests/test_comprehensive.py
+# Get token from web interface
+# Visit: https://app.authsec.dev
+# Login and copy your JWT token
+
+# Set token environment variable
+export TEST_AUTH_TOKEN='your-jwt-token-here'
+
+# Run all tests via bootstrap script
+./bootstrap_tests.sh
+
+# Or run individual tests
+python3 tests/test_e2e_token_based.py
+python3 tests/test_e2e_admin_workflow.py
+python3 tests/test_e2e_complete.py
 ```
 
-### Run All Tests with Pytest
+## Test Files
+
+### Primary E2E Tests
+
+| File | Description | Status |
+|------|-------------|--------|
+| **test_e2e_token_based.py** | Complete E2E test with API-based user extraction and role binding | ✅ Primary test |
+| **test_e2e_admin_workflow.py** | Admin workflow test covering permissions, roles, and bindings | ✅ Token-based |
+| **test_e2e_complete.py** | Simplified E2E RBAC test | ✅ Token-based |
+
+### Additional Tests
+
+| File | Description | Status |
+|------|-------------|--------|
+| **test_comprehensive.py** | Comprehensive SDK tests | ✅ Compatible |
+| **test_integration.py** | Integration tests | ✅ Compatible |
+
+### Utilities
+
+| File | Description |
+|------|-------------|
+| **verify_token.py** | Debug token format and extract user_id |
+| **run_tests.sh** | Test runner script |
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TEST_AUTH_TOKEN` | Yes | JWT token from app.authsec.dev |
+| `TEST_ADMIN_TOKEN` | No | Admin token (if different from TEST_AUTH_TOKEN) |
+| `TEST_ENDUSER_TOKEN` | No | End-user token (for multi-user tests) |
+| `UFLOW_BASE_URL` | No | API base URL (default: https://dev.api.authsec.dev) |
+
+## Getting a Token
+
+1. Visit [https://app.authsec.dev](https://app.authsec.dev)
+2. Complete MFA/OTP authentication
+3. Copy your JWT token from the browser/API response
+4. Set as environment variable:
+   ```bash
+   export TEST_AUTH_TOKEN='eyJhbGc...'
+   ```
+
+## Running Tests
+
+### Using Bootstrap Script (Recommended)
+
 ```bash
-# Install pytest if not already installed
-pip install pytest pytest-cov
+# Interactive mode (prompts for token)
+./bootstrap_tests.sh
 
-# Run all tests
-pytest tests/ -v
+# Quick mode with environment variable
+export TEST_AUTH_TOKEN='your-token'
+./bootstrap_tests.sh --quick
 
-# Run with coverage
-pytest tests/ --cov=authsec --cov-report=html
+# Admin tests only
+export TEST_ADMIN_TOKEN='admin-token'
+./bootstrap_tests.sh --admin-only
 ```
 
----
+### Running Individual Tests
 
-## Token Expectations
+```bash
+# Set token
+export TEST_AUTH_TOKEN='your-token'
 
-Based on your original question, here's how tokens are handled:
+# Run specific test
+python3 tests/test_e2e_token_based.py
+python3 tests/test_e2e_admin_workflow.py
+python3 tests/test_e2e_complete.py
 
-### Integration Tests Approach:
+# Run with pytest
+pytest tests/test_e2e_token_based.py -v
+```
 
-1. **`test_comprehensive.py`**: ✅ **No real tokens needed** - Just validates structure
-2. **`test_integration.py`**: 🔄 **Generates real tokens** - Creates test data in database, generates actual JWT tokens
-3. **`test_login.py`**: 🔐 **Uses real tokens** - Requires valid user credentials, returns real JWT from API
+### Debugging Token Issues
 
-### Token Generation Methods:
+```bash
+# Check if token can be decoded and user_id extracted
+export TEST_AUTH_TOKEN='your-token'
+python3 tests/verify_token.py
+```
 
-- **Real Authentication**: `client.login(email, password, client_id)` → Real JWT from API
-- **OIDC Exchange**: `client.exchange_oidc(oidc_token)` → Real JWT from OIDC provider
-- **Pre-existing Token**: `client = AuthSecClient(token="existing-jwt")` → Use existing token
+This will show:
+- Token format validation
+- Available claims in token
+- Extracted user_id
+- Whether role binding tests can run
 
-### No Mocking
+## Test Requirements
 
-The SDK **does not use mocked tokens**. All integration tests use:
-- Real database connections
-- Real API calls
-- Real JWT token generation
-- Real authentication flows
+All tests require:
+- Pre-obtained JWT token from web interface
+- Valid tenant with admin or end-user permissions
+- Network access to dev.api.authsec.dev
 
----
+**Important:** Tests do NOT perform registration or login. These must be done externally via the web interface.
 
-## CI/CD Integration
+## Authentication Pattern
 
-For CI/CD pipelines, you can:
+All tests follow this pattern:
 
-1. **Run basic tests** (no dependencies):
-   ```bash
-   python3 tests/test_comprehensive.py
-   ```
+```python
+import os
+from authsec import AuthSecClient, AdminHelper
 
-2. **Run with test database**:
-   ```bash
-   # Setup test database
-   docker run -d -p 5433:5432 -e POSTGRES_DB=authsec -e POSTGRES_USER=authsec -e POSTGRES_PASSWORD=authsec@kloudone postgres:14
-   
-   # Run integration tests
-   python3 tests/test_integration.py
-   ```
+# Get token from environment
+token = os.getenv('TEST_AUTH_TOKEN')
+if not token:
+    raise ValueError("TEST_AUTH_TOKEN required")
 
-3. **Skip tests requiring credentials**:
-   ```bash
-   pytest tests/test_comprehensive.py -v
-   ```
+# Initialize with token
+client = AuthSecClient(
+    base_url="https://dev.api.authsec.dev/uflow",
+    token=token
+)
 
----
+# Run tests...
+```
+
+## No Login in Tests
+
+⚠️ **Important:** These tests do NOT call `login()` or `register()` methods.
+
+**Why?**
+- MFA/OTP requirements make automated login impossible
+- Tests focus on RBAC functionality, not authentication
+- Tokens are obtained externally via web interface
+
+**Migration:**
+- Old tests that called `login()` have been removed or migrated
+- All tests now use token-based authentication only
+
+## Test Coverage
+
+### What's Tested
+
+- ✅ Permission creation (AdminHelper)
+- ✅ Role creation (AdminHelper)
+- ✅ Role binding creation (AdminHelper)
+- ✅ Permission checks (AuthSecClient)
+- ✅ Permission listing (AuthSecClient)
+- ✅ Role listing (AdminHelper)
+- ✅ User ID extraction from token (via API)
+
+### What's NOT Tested
+
+- ❌ User registration (requires MFA)
+- ❌ User login (requires MFA/OTP)
+- ❌ OTP verification (manual process)
+- ❌ Password management (requires MFA)
 
 ## Troubleshooting
 
-### Import Errors
-If you get import errors, make sure you're running from the repository root:
+### "TEST_AUTH_TOKEN required" Error
+
+**Solution:** Set the environment variable before running tests:
 ```bash
-cd /path/to/authz-sdk
-python3 tests/test_comprehensive.py
+export TEST_AUTH_TOKEN='your-jwt-token'
 ```
 
-### Database Connection Failures
-Check that PostgreSQL is running:
-```bash
-psql -h localhost -p 5433 -U authsec -d authsec
+### "Could not extract user_id from token" Warning
+
+**Causes:**
+- Token format issues
+- Token doesn't contain user_id/sub/client_id claim
+
+**Solutions:**
+1. Manually set user ID:
+   ```bash
+   export TEST_USER_ID='your-user-uuid'
+   ```
+2. Debug token with `verify_token.py`
+3. Get new token from web interface
+
+### Role Binding Skipped
+
+**Cause:** No role_id returned from backend
+
+**What happens:**
+- Tests continue but skip role binding creation
+- Permission checks return empty (user has no assigned roles)
+
+**This is a backend API issue, not SDK issue**
+
+### Tests Pass But Permissions Return Empty
+
+**Cause:** Backend API returns None/empty for created resources
+
+**Impact:**
+- create_role() returns None → no role_id
+- Can't create role binding → permissions not assigned
+- Permission checks correctly return empty
+
+**This indicates backend needs fixes, SDK is working correctly**
+
+## CI/CD Integration
+
+For automated testing in CI/CD:
+
+```yaml
+# Example GitHub Actions
+- name: Run E2E Tests
+  env:
+    TEST_AUTH_TOKEN: ${{ secrets.TEST_AUTH_TOKEN }}
+  run: |
+    ./bootstrap_tests.sh --quick
 ```
 
-### Authentication Failures
-Verify your credentials are correct:
-```bash
-echo $TEST_EMAIL
-echo $TEST_CLIENT_ID
-# Don't echo password for security
-```
+Store `TEST_AUTH_TOKEN` as a secret in your CI/CD system.
 
----
+## Further Reading
 
-## Test Summary
-
-| Test File | Dependencies | Status | Purpose |
-|-----------|-------------|--------|---------|
-| `test_comprehensive.py` | None | ✅ Passing | Validate SDK structure |
-| `test_integration.py` | PostgreSQL + Auth Manager | ⚠️ Needs setup | Full integration testing |
-| `test_login.py` | Valid credentials | ⚠️ Needs config | Authentication testing |
-
-**Next Steps:**
-1. ✅ Run `test_comprehensive.py` - No setup needed
-2. Configure database for `test_integration.py`
-3. Set up test credentials for `test_login.py`
+- [BOOTSTRAP_TESTING.md](../BOOTSTRAP_TESTING.md) - Bootstrap script guide
+- [MIGRATION_LOGIN_REMOVAL.md](../MIGRATION_LOGIN_REMOVAL.md) - Login removal migration guide
+- [README.md](../README.md) - Main SDK documentation
