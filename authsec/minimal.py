@@ -19,7 +19,8 @@ class AuthSecClient:
         timeout: float = 5.0,
         legacy_proxy_mode: bool = False,
         uflow_base_url: Optional[str] = None,
-        token: Optional[str] = None
+        token: Optional[str] = None,
+        endpoint_type: str = "enduser"
     ):
         """
         Initialize AuthSec SDK client.
@@ -31,92 +32,254 @@ class AuthSecClient:
             uflow_base_url: Base URL for user-flow service (optional, defaults to base_url)
             token: Pre-authenticated JWT token (optional). If provided, skips login step.
                    Use this when you have already obtained a token via OIDC or other means.
+            endpoint_type: Endpoint type to use - "admin" or "enduser" (default: "enduser")
+                          This determines which API paths are used by default.
         
         Example:
-            >>> # Standard usage - will call login()
+            >>> # End-user client (default)
             >>> client = AuthSecClient("https://api.example.com")
-            >>> client.login(email="user@example.com", password="pass", client_id="...")
+            
+            >>> # Admin client
+            >>> admin = AuthSecClient("https://api.example.com", endpoint_type="admin")
             
             >>> # With pre-authenticated token
             >>> client = AuthSecClient("https://api.example.com", token="eyJhbG...")
-            >>> # Ready to use immediately - no login() needed
         """
         self.base_url = base_url.rstrip("/")
         self.uflow_base_url = uflow_base_url.rstrip("/") if uflow_base_url else self.base_url
         self.timeout = timeout
         self.legacy_proxy_mode = legacy_proxy_mode
+        self.endpoint_type = endpoint_type.lower()
+        if self.endpoint_type not in ["admin", "enduser"]:
+            raise ValueError("endpoint_type must be 'admin' or 'enduser'")
         self.token: Optional[str] = token  # Can be set during init or via login()
         self._claims_cache: Optional[Dict[str, Any]] = None
 
-    def _get_path(self, endpoint: str) -> str:
-        """Resolve path based on mode (Legacy Proxy vs Standard User API)"""
+    def _get_path(self, endpoint: str, use_admin: bool = False) -> str:
+        """
+        Resolve path based on mode and endpoint type.
+        
+        Args:
+            endpoint: Base endpoint path
+            use_admin: Override to use admin endpoint (default: uses self.endpoint_type)
+        
+        Returns:
+            Resolved endpoint path
+        """
         if self.legacy_proxy_mode:
-            # Map standard endpoints to legacy /authmgr paths
+            # /legacy-api/* → /authmgr/*
+            return f"/authmgr{endpoint}"
+        else:
+            # Standard endpoint routing
+            # /uflow/ prefixed routes go to uflow_base_url
+            if endpoint.startswith("/uflow/"):
+                return endpoint
+            
+            # Determine prefix based on endpoint_type or override
+            current_endpoint_type = "admin" if use_admin else self.endpoint_type
+            prefix = "/auth/admin" if current_endpoint_type == "admin" else "/auth/user"
+            
+            # Map specific endpoints
             if endpoint == "/auth/user/verifyToken":
-                return "/authmgr/verifyToken"
+                return f"{prefix}/verifyToken"
             if endpoint == "/auth/user/generateToken":
-                return "/authmgr/generateToken"
+                return f"{prefix}/generateToken"
             if endpoint == "/auth/user/permissions/check":
-                return "/authmgr/enduser/permissions/check"
-            # Fallback (or add others as needed)
-            return endpoint.replace("/auth/user/", "/authmgr/")
-        return endpoint
+                return f"{prefix}/permissions/check"
+            
+            # Fallback for other /auth/user/ or /auth/admin/ endpoints
+            if endpoint.startswith("/auth/user/"):
+                return endpoint.replace("/auth/user/", f"{prefix}/")
+            if endpoint.startswith("/auth/admin/"):
+                return endpoint.replace("/auth/admin/", f"{prefix}/")
+            
+            return endpoint
 
     # ---------------------------
     # Token lifecycle (server calls)
     # ---------------------------
 
-    def login(
+    def register(
         self,
         *,
         email: str,
+        name: str,
         password: str,
-        client_id: str,
+        tenant_domain: str,
         uflow_base_url: Optional[str] = None
-    ) -> str:
+    ) -> dict:
         """
-        Login with email and password to get JWT token.
-        
-        This is the RECOMMENDED method for end-user authentication.
-        Uses the /uflow/auth/enduser/login endpoint.
+        Register a new admin user and tenant.
         
         Args:
             email: User email address
-            password: User password
-            client_id: Client UUID
+            name: User's full name
+            password: User password (minimum 6 characters)
+            tenant_domain: Unique tenant domain identifier
             uflow_base_url: User-flow base URL (optional, uses self.uflow_base_url if not provided)
         
         Returns:
-            JWT access token
+            Registration response containing OTP and registration details
             
         Raises:
-            HTTPError: If authentication fails (401/403)
+            HTTPError: If registration fails
             
         Example:
             >>> client = AuthSecClient("http://localhost:7468")
-            >>> token = client.login(
-            ...     email="user@example.com",
-            ...     password="secure-password",
-            ...     client_id="client-uuid-123"
+            >>> response = client.register(
+            ...     email="admin@example.com",
+            ...     name="Admin User",
+            ...     password="SecurePass123!",
+            ...     tenant_domain="example-tenant"
             ... )
+            >>> print(response['otp'])  # OTP for dev/testing
         """
         base = uflow_base_url or self.uflow_base_url
-        url = f"{base}/auth/enduser/login"
+        url = f"{base}/auth/admin/register"
         payload = {
             "email": email,
+            "name": name,
             "password": password,
-            "client_id": client_id
+            "tenant_domain": tenant_domain
+        }
+        r = requests.post(url, json=payload, timeout=self.timeout)
+        r.raise_for_status()
+        return r.json()
+
+    def verify_registration(
+        self,
+        *,
+        email: str,
+        otp: str,
+        uflow_base_url: Optional[str] = None
+    ) -> dict:
+        """
+        Verify registration with OTP.
+        
+        Args:
+            email: User email address
+            otp: OTP code received during registration
+            uflow_base_url: User-flow base URL (optional, uses self.uflow_base_url if not provided)
+        
+        Returns:
+            Verification response containing tenant_domain, client_id, etc.
+            
+        Raises:
+            HTTPError: If verification fails
+        """
+        base = uflow_base_url or self.uflow_base_url
+        url = f"{base}/auth/admin/register/verify"
+        payload = {
+            "email": email,
+            "otp": otp
         }
         r = requests.post(url, json=payload, timeout=self.timeout)
         r.raise_for_status()
         
-        response = r.json()
-        tok = response.get("token")
-        if not tok:
-            raise ValueError("Login response did not contain token")
+        # Handle empty response
+        if not r.text:
+            return {"verified": True}
+        return r.json()
+
+    def register_enduser(
+        self,
+        *,
+        client_id: str,
+        email: str,
+        password: str,
+        uflow_base_url: Optional[str] = None
+    ) -> dict:
+        """
+        Register a new end-user within an existing client/tenant.
         
-        self.set_token(tok)
-        return tok
+        This initiates end-user registration and sends an OTP for verification.
+        Use this when registering users within an existing tenant (not creating new tenants).
+        
+        Args:
+            client_id: Existing client UUID (tenant must already exist)
+            email: User email address
+            password: User password (minimum 6 characters)
+            uflow_base_url: User-flow base URL (optional, uses self.uflow_base_url if not provided)
+        
+        Returns:
+            Registration initiation response: {"email": str, "message": str}
+            OTP is sent via email in production, may be included in response for dev/test environments
+            
+        Raises:
+            HTTPError: If registration fails
+            
+        Example:
+            >>> client = AuthSecClient("https://api.example.com", endpoint_type="enduser")
+            >>> response = client.register_enduser(
+            ...     client_id="existing-client-uuid",
+            ...     email="user@example.com",
+            ...     password="SecurePass123!"
+            ... )
+            >>> print(response['message'])  # "Registration initiated. Check email for OTP."
+        """
+        base = uflow_base_url or self.uflow_base_url
+        url = f"{base}/auth/enduser/initiate-registration"
+        payload = {
+            "client_id": client_id,
+            "email": email,
+            "password": password
+        }
+        r = requests.post(url, json=payload, timeout=self.timeout)
+        r.raise_for_status()
+        return r.json()
+
+    def verify_enduser_registration(
+        self,
+        *,
+        email: str,
+        otp: str,
+        uflow_base_url: Optional[str] = None
+    ) -> dict:
+        """
+        Verify end-user registration with OTP.
+        
+        Completes the end-user registration process by verifying the OTP.
+        Returns full account details including tenant_domain needed for login.
+        
+        Args:
+            email: User email address
+            otp: OTP code received via email (or in dev response)
+            uflow_base_url: User-flow base URL (optional, uses self.uflow_base_url if not provided)
+        
+        Returns:
+            Verification response with account details:
+            {
+                "client_id": str,
+                "email_id": str,
+                "project_id": str,
+                "tenant_domain": str,
+                "tenant_id": str
+            }
+            
+        Raises:
+            HTTPError: If verification fails
+            
+        Example:
+            >>> response = client.verify_enduser_registration(
+            ...     email="user@example.com",
+            ...     otp="123456"
+            ... )
+            >>> tenant_domain = response['tenant_domain']
+            >>> client_id = response['client_id']
+        """
+        base = uflow_base_url or self.uflow_base_url
+        url = f"{base}/auth/enduser/verify-otp"
+        payload = {
+            "email": email,
+            "otp": otp
+        }
+        r = requests.post(url, json=payload, timeout=self.timeout)
+        r.raise_for_status()
+        return r.json()
+
+    # login() method removed - OTP/MFA required for authentication
+    # Users should obtain tokens via web interface and use token parameter in __init__
+    # See: https://app.authsec.dev for token generation
     
     def exchange_oidc(self, oidc_token: str) -> str:
         """Call /authmgr/oidcToken to exchange an OIDC token for application token."""

@@ -6,32 +6,36 @@ This example demonstrates:
 - Listing role bindings
 - Removing role bindings
 - Working with scoped roles
+
+Note: Get your token from https://app.authsec.dev first
 """
 
 from authsec import AuthSecClient
+import os
 
 
 def main():
     """Role management workflow example"""
     
-    # Initialize and login
-    print("🔧 Initializing AuthSec client...")
-    client = AuthSecClient("https://dev.api.authsec.dev")
-    
-    try:
-        token = client.login(
-            email="admin@example.com",
-            password="admin-password",
-            client_id="your-client-id"
-        )
-        print("✅ Login successful!")
-    except Exception as e:
-        print(f"❌ Login failed: {e}")
+    # Get token from environment
+    token = os.getenv('AUTHSEC_TOKEN')
+    if not token:
+        print("❌ Error: AUTHSEC_TOKEN environment variable not set")
+        print("   Get your token from https://app.authsec.dev")
+        print("   Then: export AUTHSEC_TOKEN='your-token'")
         return
     
-    # Example user and role IDs (replace with real IDs)
-    user_id = "550e8400-e29b-41d4-a716-446655440000"
-    role_id = "660e8400-e29b-41d4-a716-446655440001"
+    # Initialize with token
+    print("🔧 Initializing AuthSec client...")
+    client = AuthSecClient(
+        base_url="https://dev.api.authsec.dev",
+        token=token
+    )
+    print("✅ Client initialized!")
+    
+    # Example user and role IDs (replace with real IDs from your tenant)
+    user_id = os.getenv('TEST_USER_ID', "550e8400-e29b-41d4-a716-446655440000")
+    role_id = os.getenv('TEST_ROLE_ID', "660e8400-e29b-41d4-a716-446655440001")
     
     # Assign a role to a user (tenant-wide)
     print(f"\n👤 Assigning role {role_id[:8]}... to user {user_id[:8]}...")
@@ -83,7 +87,7 @@ def main():
     except Exception as e:
         print(f"❌ Failed to list role bindings: {e}")
     
-    # Remove a role binding (example - commented out to avoid accidental deletion)
+    # Remove a role binding (example - uncomment to use)
     # print(f"\n🗑️  Removing role binding...")
     # binding_id = "880e8400-e29b-41d4-a716-446655440003"
     # try:
@@ -102,10 +106,8 @@ def example_conditional_role_assignment():
     print("\n🔧 Example: Conditional Role Assignment")
     print("=" * 50)
     
-    client = AuthSecClient("https://dev.api.authsec.dev")
-    
-    # Login first...
-    # token = client.login(...)
+    token = os.getenv('AUTHSEC_TOKEN')
+    client = AuthSecClient("https://dev.api.authsec.dev", token=token)
     
     user_id = "550e8400-e29b-41d4-a716-446655440000"
     role_id = "660e8400-e29b-41d4-a716-446655440001"
@@ -128,10 +130,8 @@ def example_admin_vs_user_endpoints():
     print("\n🔧 Example: Admin vs User Endpoints")
     print("=" * 50)
     
-    client = AuthSecClient("https://dev.api.authsec.dev")
-    
-    # Login...
-    # token = client.login(...)
+    token = os.getenv('AUTHSEC_TOKEN')
+    client = AuthSecClient("https://dev.api.authsec.dev", token=token)
     
     user_id = "550e8400-e29b-41d4-a716-446655440000"
     role_id = "660e8400-e29b-41d4-a716-446655440001"
@@ -144,7 +144,7 @@ def example_admin_vs_user_endpoints():
     except Exception as e:
         print(f"  ❌ Failed: {e}")
     
-    # Use admin endpoint
+    # Use admin endpoint (requires admin token)
     print("\nUsing admin endpoint (/uflow/admin/bindings):")
     try:
         binding2 = client.assign_role(user_id, role_id, admin=True)
@@ -157,6 +157,13 @@ if __name__ == "__main__":
     print("=" * 50)
     print("AuthSec SDK - Role Management Example")
     print("=" * 50)
+    print()
+    print("📌 Setup Required:")
+    print("   1. Login at: https://app.authsec.dev")
+    print("   2. Copy your JWT token")
+    print("   3. Set: export AUTHSEC_TOKEN='your-token'")
+    print("   4. (Optional) Set TEST_USER_ID and TEST_ROLE_ID")
+    print()
     
     main()
     

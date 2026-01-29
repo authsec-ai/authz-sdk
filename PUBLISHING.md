@@ -1,195 +1,211 @@
-# Publishing to PyPI
+# Publishing to PyPI - Quick Start Guide
 
-This guide explains how to publish the authsec package to PyPI.
-
----
+This guide explains how to publish the AuthSec SDK to PyPI so users can install it with `pip install authsec-authz-sdk`.
 
 ## Prerequisites
 
-1. **PyPI Account**: Create an account at [pypi.org](https://pypi.org)
-2. **API Token**: Generate an API token from your PyPI account settings
-3. **Build Tools**: Already installed in the virtual environment
+1. **PyPI Account**: Create accounts on:
+   - Test PyPI: https://test.pypi.org/account/register/
+   - Production PyPI: https://pypi.org/account/register/
 
----
+2. **API Tokens**: Generate API tokens:
+   - Test PyPI: https://test.pypi.org/manage/account/token/
+   - Production PyPI: https://pypi.org/manage/account/token/
 
-## Build Status
+3. **Install Build Tools**:
+   ```bash
+   pip install build twine
+   ```
 
-✅ **Distribution package built successfully!**
-
-The following files have been created in the `dist/` directory:
-- `authsec-1.0.0-py3-none-any.whl` - Wheel distribution (14KB)
-- `authsec-1.0.0.tar.gz` - Source distribution (17KB)
-
----
-
-## Publishing Steps
-
-### 1. Test the Built Package Locally
+## Quick Publish (One Command)
 
 ```bash
-# Install from the wheel file
-pip install dist/authsec-1.0.0-py3-none-any.whl
+# Clean, build, and publish to Test PyPI
+./publish_to_pypi.sh --test
 
-# Or from the tarball
-pip install dist/authsec-1.0.0.tar.gz
-
-# Verify it works
-python -c "from authsec import AuthSecClient, AdminHelper; print('✓ Package works!')"
+# Publish to Production PyPI  
+./publish_to_pypi.sh --production
 ```
 
-### 2. Upload to TestPyPI (Recommended First)
+## Manual Steps
 
-TestPyPI allows you to test the publishing process without affecting the real package index:
+### Step 1: Clean Previous Builds
 
 ```bash
-# Activate the build environment
-source build-env/bin/activate
-
-# Upload to TestPyPI
-twine upload --repository testpypi dist/*
-
-# You'll be prompted for:
-# Username: __token__
-# Password: <your-testpypi-api-token>
+rm -rf dist/ build/ *.egg-info
 ```
 
-### 3. Test Install from TestPyPI
+### Step 2: Build Distribution
 
 ```bash
-# Install from TestPyPI to verify
-pip install --index-url https://test.pypi.org/simple/ --no-deps authsec
-
-# Test it
-python -c "from authsec import AuthSecClient; print('✓ TestPyPI package works!')"
+python3 -m build
 ```
 
-### 4. Upload to PyPI (Production)
+This creates:
+- `dist/authsec_authz_sdk-1.0.0-py3-none-any.whl` (wheel)
+- `dist/authsec-authz-sdk-1.0.0.tar.gz` (source)
 
-Once verified on TestPyPI, upload to the real PyPI:
+### Step 3: Check Package
 
 ```bash
-# Activate the build environment
-source build-env/bin/activate
-
-# Upload to PyPI
-twine upload dist/*
-
-# You'll be prompted for:
-# Username: __token__
-# Password: <your-pypi-api-token>
+python3 -m twine check dist/*
 ```
 
-### 5. Verify on PyPI
-
-After upload, the package will be available at:
-- Package page: https://pypi.org/project/authsec/
-- Install command: `pip install authsec`
-
----
-
-## Configuration File Method (Recommended)
-
-Instead of entering credentials each time, create a `~/.pypirc` file:
-
-```ini
-[pypi]
-username = __token__
-password = pypi-AgEIcHlwaS5vcmcC...your-token-here...
-
-[testpypi]
-username = __token__
-password = pypi-AgENdGVzdC5weXBpLm9yZw...your-testpypi-token-here...
+Expected output:
+```
+Checking dist/authsec_authz_sdk-1.0.0-py3-none-any.whl: PASSED
+Checking dist/authsec-authz-sdk-1.0.0.tar.gz: PASSED
 ```
 
-Then simply run:
-```bash
-twine upload --repository testpypi dist/*  # For TestPyPI
-twine upload dist/*                          # For PyPI
-```
-
----
-
-## Rebuilding After Changes
-
-If you make changes to the package, rebuild before publishing:
+### Step 4: Upload to Test PyPI (Recommended First)
 
 ```bash
-# Clean old builds
-rm -rf dist/ build/ authsec.egg-info/
-
-# Rebuild
-source build-env/bin/activate
-python -m build
-
-# Upload new version
-twine upload dist/*
+python3 -m twine upload --repository testpypi dist/*
 ```
 
----
+Enter your Test PyPI credentials when prompted.
+
+### Step 5: Test Installation from Test PyPI
+
+```bash
+# Create test environment
+python3 -m venv test_env
+source test_env/bin/activate
+
+# Install from Test PyPI
+pip install --index-url https://test.pypi.org/simple/ authsec-authz-sdk
+
+# Test it works
+python3 -c "from authsec import AuthSecClient; print('Success!')"
+
+# Clean up
+deactivate
+rm -rf test_env
+```
+
+### Step 6: Upload to Production PyPI
+
+Once tested, upload to production:
+
+```bash
+python3 -m twine upload dist/*
+```
+
+Enter your Production PyPI credentials.
+
+## Installation After Publishing
+
+Users can then install with:
+
+```bash
+pip install authsec-authz-sdk
+```
+
+Or from GitHub (development):
+
+```bash
+pip install git+https://github.com/authsec-ai/authz-sdk.git
+```
 
 ## Version Management
 
-To publish a new version:
+Update version in `pyproject.toml`:
 
-1. Update version in `pyproject.toml`:
-   ```toml
-   [project]
-   name = "authsec"
-   version = "1.0.1"  # Increment version
-   ```
+```toml
+[project]
+name = "authsec-authz-sdk"
+version = "1.0.1"  # Increment this
+```
 
-2. Update `CHANGELOG.md` with changes
+Version numbering:
+- `1.0.0` → `1.0.1` - Bug fixes
+- `1.0.0` → `1.1.0` - New features (backward compatible)
+- `1.0.0` → `2.0.0` - Breaking changes
 
-3. Update version in `authsec/__init__.py`:
-   ```python
-   __version__ = "1.0.1"
-   ```
+## Automated Publishing with GitHub Actions
 
-4. Rebuild and publish:
-   ```bash
-   rm -rf dist/ build/ authsec.egg-info/
-   python -m build
-   twine upload dist/*
-   ```
+Create `.github/workflows/publish.yml`:
 
----
+```yaml
+name: Publish to PyPI
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+      - name: Build package
+        run: python -m build
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: python -m twine upload dist/*
+```
+
+Add `PYPI_API_TOKEN` to GitHub repository secrets.
 
 ## Troubleshooting
 
-### Build Failed
-- Check `pyproject.toml` syntax
-- Ensure all files referenced in `MANIFEST.in` exist
-- Verify Python version compatibility
+### "File already exists" Error
 
-### Upload Failed - "File already exists"
-- You cannot re-upload the same version
-- Increment the version number in `pyproject.toml`
+PyPI doesn't allow re-uploading the same version. You must:
+1. Increment version in `pyproject.toml`
+2. Rebuild: `python3 -m build`
+3. Upload again
 
-### Upload Failed - "Invalid credentials"
-- Verify your API token is correct
-- Use `__token__` as username, not your PyPI username
-- Check token has upload permissions
+### Authentication Failed
 
-### Package Not Installing
-- Verify dependencies in `requirements.txt` are correct
-- Check Python version requirement (>=3.7)
-- Test in a clean virtual environment
+- Verify API token is correct
+- Use `__token__` as username
+- Token as password
 
----
+### Import Errors After Install
 
-## Security Best Practices
+Check package structure:
+```bash
+pip show authsec-authz-sdk
+```
 
-1. **Never commit tokens** - Add `.pypirc` to `.gitignore`
-2. **Use scoped tokens** - Create tokens for specific projects
-3. **Rotate tokens regularly** - Update tokens periodically
-4. **Use TestPyPI first** - Always test before production upload
+Verify:
+```python
+import authsec
+print(authsec.__file__)  # Should show installed location
+```
 
----
+## Quick Reference
 
-## Next Steps After Publishing
+```bash
+# Clean build
+rm -rf dist/ build/ *.egg-info
 
-1. Add PyPI badge to README.md (already included)
-2. Announce the release
-3. Monitor PyPI download statistics
-4. Respond to user issues and feedback
-5. Plan next version based on feedback
+# Build package
+python3 -m build
+
+# Check package
+python3 -m twine check dist/*
+
+# Upload to Test PyPI
+python3 -m twine upload --repository testpypi dist/*
+
+# Upload to Production PyPI
+python3 -m twine upload dist/*
+```
+
+## Package Information
+
+- **Package Name**: `authsec-authz-sdk`
+- **Import Name**: `authsec`
+- **PyPI URL**: https://pypi.org/project/authsec-authz-sdk/
+- **Test PyPI URL**: https://test.pypi.org/project/authsec-authz-sdk/

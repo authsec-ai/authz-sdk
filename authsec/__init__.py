@@ -5,13 +5,16 @@ Official Python SDK for AuthSec authentication and RBAC management.
 
 Example:
     from authsec import AuthSecClient, AdminHelper
+    import os
     
-    # Authentication
-    client = AuthSecClient("https://dev.api.authsec.dev")
-    token = client.login("user@example.com", "password", "client-id")
+    # Authentication (get token from https://app.authsec.dev)
+    client = AuthSecClient(
+        base_url="https://dev.api.authsec.dev",
+        token=os.getenv('AUTHSEC_TOKEN')
+    )
     
     # RBAC Management
-    admin = AdminHelper(token=token, endpoint_type="admin")
+    admin = AdminHelper(token=os.getenv('AUTHSEC_ADMIN_TOKEN'), endpoint_type="admin")
     role = admin.create_role("Editor", permission_strings=["document:read"])
 """
 
