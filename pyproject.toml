@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "AuthSec SDK for authentication and RBAC management"
 readme = "README.md"
 requires-python = ">=3.7"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 authors = [
     {name = "AuthSec", email = "support@authsec.dev"}
 ]
@@ -16,7 +16,7 @@ keywords = ["authentication", "authorization", "rbac", "jwt", "oidc", "role-base
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",

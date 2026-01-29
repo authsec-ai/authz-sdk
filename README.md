@@ -2,7 +2,7 @@
 
 Official Python SDK for AuthSec authentication and role-based access control (RBAC).
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 > **Quick Navigation:** [Installation](#installation) | [Quick Start](#quick-start) | [AuthSecClient](#authsecclient-guide) | [AdminHelper](#adminhelper-guide) | [Examples](#examples) | [Testing](tests/README.md)
 
