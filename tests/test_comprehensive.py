@@ -69,7 +69,6 @@ def test_authsecclient():
     required_methods = [
         'login',
         'exchange_oidc',
-        'verify_token',
         'set_token',
         'check_permission',
         'check_permission_scoped',
@@ -243,7 +242,6 @@ def test_documentation_accuracy():
     # Check that documented methods in auth.md exist
     auth_methods_documented = [
         ('AuthSecClient', 'exchange_oidc'),
-        ('AuthSecClient', 'verify_token'),
         ('AuthSecClient', 'set_token'),
         ('AuthSecClient', 'check_permission'),
         ('AuthSecClient', 'check_permission_scoped'),

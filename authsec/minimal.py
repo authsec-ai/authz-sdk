@@ -294,19 +294,6 @@ class AuthSecClient:
         self.token = token
         self._claims_cache = None  # reset cache
 
-    def verify_token(self, token: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Server-side authentication check: POST /authmgr/verifyToken
-        Returns decoded claims if the token is valid.
-        """
-        tok = token or self.token
-        if not tok:
-            raise RuntimeError("No token available to verify. Set or pass a token.")
-        url = f"{self.base_url}/authmgr/verifyToken"
-        r = requests.post(url, json={"token": tok}, timeout=self.timeout)
-        r.raise_for_status()
-        return r.json()
-
     # ---------------------------
     # Making app requests (token injection)
     # ---------------------------

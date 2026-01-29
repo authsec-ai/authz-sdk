@@ -76,15 +76,15 @@ def test_complete_e2e_flow():
         
         user_id = None
         try:
-            # verify_token uses /authmgr endpoint on main base_url
-            authmgr_client = AuthSecClient(base_url=base_url, token=token)
-            token_info = authmgr_client.verify_token(token)
+            # Extract user ID from JWT decode
+            import jwt
+            decoded = jwt.decode(token, options={"verify_signature": False})
             
             # Try various fields
-            user_id = (token_info.get('user_id') or 
-                      token_info.get('sub') or 
-                      token_info.get('client_id') or
-                      token_info.get('id'))
+            user_id = (decoded.get('user_id') or 
+                      decoded.get('sub') or 
+                      decoded.get('client_id') or
+                      decoded.get('id'))
             
             if user_id:
                 print_success(f"User ID: {user_id}")

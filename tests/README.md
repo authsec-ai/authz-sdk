@@ -115,7 +115,6 @@ admin_helper = AdminHelper(token=token, base_url=base_url)
 
 | File | Description |
 |------|-------------|
-| **verify_token.py** | Debug token and extract user_id |
 | **run_tests.sh** | Test runner script |
 | **bootstrap_tests.sh** | Interactive test bootstrap |
 
@@ -276,10 +275,15 @@ Get token from: https://app.authsec.dev (for dev) or your custom domain.
 **Problem:** Token verification fails
 
 **Debug:**
-```bash
-# Check token with debug script
-export TEST_AUTH_TOKEN='your-token'
-python3 tests/verify_token.py
+```python
+# Decode token locally to check claims
+import jwt
+import os
+
+token = os.getenv('TEST_AUTH_TOKEN')
+decoded = jwt.decode(token, options={"verify_signature": False})
+print(f"Claims: {decoded}")
+print(f"User ID: {decoded.get('user_id') or decoded.get('sub')}")
 ```
 
 This shows:

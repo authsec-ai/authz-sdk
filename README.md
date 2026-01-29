@@ -147,13 +147,11 @@ client = AuthSecClient(
     token="eyJhbGc..."
 )
 
-# Method 2: Set token later
+# Initialize with token
 client.set_token("eyJhbGc...")
 
-# Verify token
-claims = client.verify_token()
-if claims:
-    print(f"Token valid for: {claims.get('email_id')}")
+# Token is automatically used in all API calls
+# No verification method needed - token validity checked by backend
 ```
 
 ### Permission Checking
@@ -483,7 +481,6 @@ print("✓ RBAC setup complete!")
 |--------|-------------|---------|
 | `__init__(base_url, token=None, ...)` | Initialize client | AuthSecClient |
 | `set_token(token)` | Set authentication token | None |
-| `verify_token(token=None)` | Verify token validity | dict (claims) |
 | `check_permission(resource, action)` | Check permission | bool |
 | `check_permission_scoped(...)` | Check scoped permission | bool |
 | `list_permissions()` | List user permissions | list |

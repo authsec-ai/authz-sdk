@@ -68,55 +68,36 @@ def test_admin_operations(token, base_url="https://dev.api.authsec.dev"):
         admin_helper = AdminHelper(token=token, base_url=base_url)
         
         # ========================================
-        # Test 1: Get User ID from Token (via API)
+        # Test 1: Get User ID from Token
         # ========================================
         print_step(1, "Get User ID from Token")
         user_id = None
         
         try:
-            # Initialize AuthSecClient first
+            # Initialize AuthSecClient
             client = AuthSecClient(base_url=f"{base_url}/uflow", token=token)
             
-            # Method 1: Try verify_token API endpoint
-            print_info("Attempting to get user info via verify_token API...")
+            # Method 1: JWT decode (no API call needed)
+            print_info("Extracting user info from JWT token...")
             try:
-                # verify_token calls /authmgr/verifyToken
-                # Need to use base URL without /uflow for authmgr endpoint
-                authmgr_client = AuthSecClient(base_url=base_url, token=token)
-                token_info = authmgr_client.verify_token(token)
-                
-                # Try different common claim names for user_id
-                user_id = (token_info.get('user_id') or 
-                          token_info.get('sub') or 
-                          token_info.get('userId') or
-                          token_info.get('uid') or
-                          token_info.get('client_id') or  # Some APIs use client_id as user identifier
-                          token_info.get('id'))
+                decoded = jwt.decode(token, options={"verify_signature": False})
+                user_id = (decoded.get('user_id') or 
+                          decoded.get('sub') or 
+                          decoded.get('userId') or
+                          decoded.get('uid') or
+                          decoded.get('client_id') or
+                          decoded.get('id'))
                 
                 if user_id:
-                    print_success(f"✅ User ID from API: {user_id}")
-                    print_info(f"Token claims: {', '.join(token_info.keys())}")
+                    print_success(f"✅ User ID from JWT: {user_id}")
+                    print_info(f"Available claims: {', '.join(decoded.keys())}")
                 else:
-                    print_warning("Token verified but no user_id claim found")
-                    print_info(f"Available claims: {', '.join(token_info.keys())}")
-                    print_info(f"Full response: {token_info}")
-            except Exception as api_error:
-                print_warning(f"verify_token API failed: {str(api_error)[:100]}")
-                
-                # Method 2: Try JWT decode as fallback
-                print_info("Falling back to JWT decode...")
-                try:
-                    decoded = jwt.decode(token, options={"verify_signature": False})
-                    user_id = decoded.get('user_id') or decoded.get('sub') or decoded.get('userId')
-                    
-                    if user_id:
-                        print_success(f"User ID from JWT decode: {user_id}")
-                    else:
-                        print_warning("JWT decoded but no user_id found")
-                except Exception as jwt_error:
-                    print_warning(f"JWT decode also failed: {str(jwt_error)[:60]}")
+                    print_warning("JWT decoded but no user_id claim found")
+                    print_info(f"Available claims: {', '.join(decoded.keys())}")
+            except Exception as jwt_error:
+                print_warning(f"JWT decode failed: {str(jwt_error)[:60]}")
             
-            # Method 3: Environment variable fallback
+            # Method 2: Environment variable fallback
             if not user_id:
                 user_id = os.getenv('TEST_USER_ID')
                 if user_id:
@@ -139,9 +120,9 @@ def test_admin_operations(token, base_url="https://dev.api.authsec.dev"):
             results['failed'].append('get_user_id')
         
         # ========================================
-        # Test 2: Create Permissions
+        # Test 2: Check Permission
         # ========================================
-        print_step(2, "Create Permissions")
+        print_step(2, "Check Permission")
         
         permissions_to_create = [
             (f"test_resource_{random_id}", "read", "Read test resource"),
@@ -350,23 +331,9 @@ def test_enduser_operations(token, base_url="https://dev.api.authsec.dev"):
         )
         
         # ========================================
-        # Test 1: Verify Token (Best Effort)
+        # Test 1: List Permissions
         # ========================================
-        print_step(1, "Verify Token")
-        try:
-            token_info = client.verify_token(token)
-            print_success("Token verified")
-            print_info(f"User ID: {token_info.get('user_id') or token_info.get('sub')}")
-            results['passed'].append('verify_token')
-        except Exception as e:
-            print_warning(f"Token verification skipped: {str(e)[:60]}")
-            print_info("Proceeding with permission tests")
-            results['skipped'].append('verify_token')
-        
-        # ========================================
-        # Test 2: List Permissions
-        # ========================================
-        print_step(2, "List User Permissions")
+        print_step(1, "List User Permissions")
         try:
             permissions = client.list_permissions()
             print_success(f"User has {len(permissions)} permissions")

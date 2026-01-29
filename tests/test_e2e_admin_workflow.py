@@ -95,14 +95,14 @@ def test_e2e_admin_workflow():
         
         admin_user_id = None
         try:
-            # Use verify_token API to get user info
-            authmgr_client = AuthSecClient(base_url=base_url, token=admin_token)
-            token_info = authmgr_client.verify_token(admin_token)
+            # Extract user ID from JWT decode
+            import jwt
+            decoded = jwt.decode(admin_token, options={"verify_signature": False})
             
-            admin_user_id = (token_info.get('user_id') or 
-                           token_info.get('sub') or 
-                           token_info.get('client_id') or
-                           token_info.get('id'))
+            admin_user_id = (decoded.get('user_id') or 
+                           decoded.get('sub') or 
+                           decoded.get('client_id') or
+                           decoded.get('id'))
             
             if admin_user_id:
                 print_success(f"Admin User ID: {admin_user_id}")
@@ -219,13 +219,13 @@ def test_e2e_admin_workflow():
             
             enduser_user_id = None
             try:
-                enduser_authmgr = AuthSecClient(base_url=base_url, token=enduser_token)
-                enduser_info = enduser_authmgr.verify_token(enduser_token)
+                import jwt
+                decoded = jwt.decode(enduser_token, options={"verify_signature": False})
                 
-                enduser_user_id = (enduser_info.get('user_id') or 
-                                 enduser_info.get('sub') or 
-                                 enduser_info.get('client_id') or
-                                 enduser_info.get('id'))
+                enduser_user_id = (decoded.get('user_id') or 
+                                 decoded.get('sub') or 
+                                 decoded.get('client_id') or
+                                 decoded.get('id'))
                 
                 if enduser_user_id:
                     print_success(f"End-User ID: {enduser_user_id}")
