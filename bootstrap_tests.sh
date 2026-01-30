@@ -198,7 +198,26 @@ echo -e "${BLUE}║                    Running E2E Tests                        
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Build test command
+echo -e "${BLUE}ℹ Running test suite...${NC}"
+echo ""
+
+# Run comprehensive test first (no token needed)
+echo -e "${YELLOW}[1/4] Running SDK structure validation...${NC}"
+$PYTHON_CMD tests/test_comprehensive.py
+echo ""
+
+# Run endpoint validation
+echo -e "${YELLOW}[2/4] Running endpoint validation...${NC}"
+$PYTHON_CMD tests/test_endpoint_validation.py
+echo ""
+
+# Run registration & OIDC tests
+echo -e "${YELLOW}[3/4] Running registration & OIDC tests...${NC}"
+$PYTHON_CMD tests/test_registration_oidc.py
+echo ""
+
+# Run primary E2E test
+echo -e "${YELLOW}[4/4] Running primary E2E tests...${NC}"
 TEST_CMD="$PYTHON_CMD tests/test_e2e_token_based.py"
 
 if [ "$ADMIN_ONLY" = true ]; then

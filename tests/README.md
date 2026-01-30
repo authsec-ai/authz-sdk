@@ -108,8 +108,10 @@ admin_helper = AdminHelper(token=token, base_url=base_url)
 
 | File | Description | Custom URL Support |
 |------|-------------|-------------------|
-| **test_comprehensive.py** | Comprehensive SDK tests | ✅ Yes |
+| **test_comprehensive.py** | SDK structure validation | ✅ Yes |
 | **test_integration.py** | Integration tests | ✅ Yes |
+| **test_endpoint_validation.py** | Validates all endpoints exist | ✅ Yes |
+| **test_registration_oidc.py** | Registration & OIDC flow tests | ✅ Yes |
 
 ### Utilities
 
@@ -248,11 +250,16 @@ python3 tests/test_e2e_token_based.py
 - End-user permission checks
 - Role-based access validation
 
-### What's NOT Tested
+✅ **Registration Flows**
+- Admin registration with OTP verification
+- End-user registration (endpoint validation)
+- OIDC token exchange (endpoint validation)
 
-❌ **User Registration** - Requires MFA/OTP via web interface  
+### What's NOT Fully Tested
+
+⚠️ **End-User Registration** - Requires existing tenant (tested for endpoint existence)  
+⚠️ **OIDC Exchange** - Requires valid OIDC token (tested for endpoint existence)  
 ❌ **User Login** - Requires MFA/OTP via web interface  
-❌ **OTP Verification** - Manual web-based process  
 ❌ **Password Management** - Requires MFA verification
 
 ---
