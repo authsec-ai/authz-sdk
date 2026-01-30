@@ -420,7 +420,10 @@ Apache License 2.0 - See [LICENSE](LICENSE) for details.
 
 ### Latest Version
 
-**Removed Methods:**
+**Latest Version:**
+- **Fixed:** Updated `AdminHelper` to use correct RBAC endpoints (`/uflow/user/rbac/*`) for end-user mode
+- **Fixed:** Improved handling of list responses for permissions, roles, and bindings
+- **Removed Methods:**
 - `login()` - Use web interface at https://app.authsec.dev for authentication
 - `verify_token()` - User ID now extracted locally from JWT (no API call needed)
 
