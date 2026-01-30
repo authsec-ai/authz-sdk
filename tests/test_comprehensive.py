@@ -67,7 +67,6 @@ def test_authsecclient():
     
     # Test method existence
     required_methods = [
-        'login',
         'exchange_oidc',
         'set_token',
         'check_permission',
@@ -288,10 +287,8 @@ def test_documentation_accuracy():
             errors.append(f"Documented method missing: {class_name}.{method_name}")
             print_error(f"Documented method missing: {class_name}.{method_name}")
     
-    # Check for login method (should still exist in code even though removed from docs)
-    if hasattr(client, 'login'):
-        print_warning("AuthSecClient.login still exists in code (not documented)")
-        warnings.append("login method exists but not documented")
+    # Note: login method was intentionally removed (requires OTP/MFA via web interface)
+    # Users should obtain tokens via https://app.authsec.dev
     
     if errors:
         print(f"\n{RED}Errors:{RESET}")
