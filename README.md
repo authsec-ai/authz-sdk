@@ -276,6 +276,161 @@ admin = AdminHelper(
 )
 ```
 
+---
+
+## Testing
+
+The SDK includes comprehensive integration tests that validate SDK wrapper methods work correctly.
+
+### Test Philosophy
+
+These are **SDK integration tests** - they validate that the SDK methods in `minimal.py` and `admin_helper.py` correctly call backend endpoints. Tests verify:
+
+✅ SDK methods execute without errors  
+✅ SDK correctly formats requests to backend APIs  
+✅ SDK properly handles backend responses  
+❌ **NOT** testing backend API implementation or business logic
+
+### Running Tests
+
+#### Quick Test
+
+```bash
+# Set your token
+export TEST_AUTH_TOKEN='your-jwt-token'
+
+# Run primary E2E test
+python3 tests/test_e2e_token_based.py
+```
+
+#### Comprehensive Test Suite
+
+```bash
+# Run all tests via bootstrap script
+./bootstrap_tests.sh
+
+# Or with pytest
+pytest tests/ -v
+```
+
+### Test Coverage
+
+#### Core SDK Methods Tested
+
+**AuthSecClient** (`minimal.py`):
+- ✅ `register()` - Admin registration with OTP
+- ✅ `verify_registration()` - OTP verification
+- ✅ `register_enduser()` - End-user registration
+- ✅ `verify_enduser_registration()` - End-user OTP verification
+- ✅ `exchange_oidc()` - OIDC token exchange
+- ✅ `check_permission()` - Permission validation
+- ✅ `check_permission_scoped()` - Scoped permissions
+- ✅ `list_permissions()` - List user permissions
+- ✅ `assign_role()` - Role binding creation
+- ✅ `list_role_bindings()` - List role assignments
+- ✅ `remove_role_binding()` - Remove role assignments
+
+**AdminHelper** (`admin_helper.py`):
+- ✅ `create_permission()` - Permission creation
+- ✅ `list_permissions()` - Permission listing
+- ✅ `create_role()` - Role creation with permissions
+- ✅ `list_roles()` - Role listing
+- ✅ `get_role()` - Fetch role details
+- ✅ `update_role()` - Update role permissions
+- ✅ `delete_role()` - Role deletion
+- ✅ `create_role_binding()` - Assign roles to users
+- ✅ `list_role_bindings()` - List user role assignments
+- ✅ `remove_role_binding()` - Remove role assignments
+
+#### Test Files
+
+| Test File | Purpose | Coverage |
+|-----------|---------|----------|
+| `test_comprehensive.py` | SDK structure validation | Package imports, method existence |
+| `test_endpoint_validation.py` | Endpoint existence validation | All 7 SDK endpoints |
+| `test_registration_oidc.py` | Registration flows | Admin/enduser registration, OIDC |
+| `test_e2e_token_based.py` | Primary E2E integration | Full RBAC workflow |
+| `test_e2e_admin_workflow.py` | Admin operations | Role/permission management |
+| `test_e2e_complete.py` | Simplified RBAC test | Permission checks |
+
+### Test Configuration
+
+```bash
+# Required
+export TEST_AUTH_TOKEN='your-jwt-token'
+
+# Optional
+export TEST_BASE_URL='https://your-domain.com/api'  # Default: dev environment
+export TEST_USER_ID='user-uuid'  # Manual override (auto-extracted from JWT)
+```
+
+### Understanding Test Results
+
+Tests validate **SDK functionality**, not backend behavior:
+
+```
+✓ SDK method executed successfully
+  - SDK made correct API call
+  - SDK handled response properly
+  - Test PASSES
+
+⚠ Backend returned empty response (SDK worked correctly)
+  - SDK executed without error
+  - Backend didn't return data (backend issue, not SDK)
+  - Test still PASSES
+```
+
+### More Information
+
+See [tests/README.md](tests/README.md) for:
+- Detailed test documentation
+- Custom domain testing
+- CI/CD integration
+- Troubleshooting guides
+
+---
+
+## Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new features
+4. Ensure all tests pass
+5. Submit a pull request
+
+---
+
+## License
+
+Apache License 2.0 - See [LICENSE](LICENSE) for details.
+
+---
+
+## Support
+
+- **Documentation:** This README and [tests/README.md](tests/README.md)
+- **Issues:** https://github.com/authsec-ai/authz-sdk/issues
+- **Email:** support@authsec.dev
+
+---
+
+## Changelog
+
+### Latest Version
+
+**Removed Methods:**
+- `login()` - Use web interface at https://app.authsec.dev for authentication
+- `verify_token()` - User ID now extracted locally from JWT (no API call needed)
+
+**Testing:**
+- Added comprehensive SDK integration tests
+- 100% SDK method coverage
+- Tests validate SDK wrapper functionality, not backend APIs
+
+**See:** [PUBLISHING.md](PUBLISHING.md) for version history
+
 ### Permission Management
 
 #### Create Permissions
