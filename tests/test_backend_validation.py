@@ -139,7 +139,7 @@ def main():
         role = admin.create_role(
             name=role_name,
             description="Test role for backend validation",
-            permission_strings=[f"{perm_resource}:read", f"{perm_resource}:write"]
+            permission_strings=[f"{perm_resource}:read"]
         )
         
         # VALIDATION: Backend should return role object with ID

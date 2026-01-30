@@ -75,7 +75,10 @@ class AdminHelper:
         if endpoint_type not in ['admin', 'enduser']:
             raise ValueError(f"endpoint_type must be 'admin' or 'enduser', got '{endpoint_type}'")
         self.endpoint_type = endpoint_type
-        self.endpoint_prefix = f"/uflow/{endpoint_type}"
+        if endpoint_type == 'enduser':
+            self.endpoint_prefix = "/uflow/user/rbac"
+        else:
+            self.endpoint_prefix = f"/uflow/{endpoint_type}"
         
         if debug:
             logger.setLevel(logging.DEBUG)
@@ -205,7 +208,7 @@ class AdminHelper:
         
         try:
             response = self._make_request("GET", f"{self.endpoint_prefix}/permissions", params=params)
-            return response.get("permissions", [])
+            return response if isinstance(response, list) else response.get("permissions", [])
         except AdminSDKError as e:
             raise PermissionError(f"Failed to list permissions: {e}")
     
@@ -308,7 +311,14 @@ class AdminHelper:
             role = admin.get_role("role-uuid-123")
         """
         try:
-            return self._make_request("GET", f"{self.endpoint_prefix}/roles/{role_id}")
+            # Use list endpoint with filtering since /roles/{id} doesn't exist on RBAC endpoint
+            params = {"role_id": role_id}
+            response = self._make_request("GET", f"{self.endpoint_prefix}/roles", params=params)
+            roles = response if isinstance(response, list) else response.get("roles", [])
+            
+            if roles and len(roles) > 0:
+                return roles[0]
+            raise RoleBindingError(f"Role not found: {role_id}")
         except AdminSDKError as e:
             raise RoleBindingError(f"Failed to get role: {e}")
     
@@ -486,7 +496,7 @@ class AdminHelper:
         
         try:
             response = self._make_request("GET", f"{self.endpoint_prefix}/bindings", params=params)
-            return response.get("bindings", [])
+            return response if isinstance(response, list) else response.get("bindings", [])
         except AdminSDKError as e:
             raise RoleBindingError(f"Failed to list role bindings: {e}")
     
@@ -542,7 +552,7 @@ class AdminHelper:
         """
         try:
             response = self._make_request("GET", f"{self.endpoint_prefix}/scopes")
-            return response.get("scopes", [])
+            return response if isinstance(response, list) else response.get("scopes", [])
         except AdminSDKError as e:
             raise ScopeError(f"Failed to list scopes: {e}")
     
