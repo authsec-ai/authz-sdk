@@ -197,45 +197,93 @@ echo -e "${BLUE}╔════════════════════�
 echo -e "${BLUE}║                    Running E2E Tests                           ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
-
-echo -e "${BLUE}ℹ Running test suite...${NC}"
+echo "======================================================================="
+echo "Running Test Suite"
+echo "======================================================================="
 echo ""
 
-# Run comprehensive test first (no token needed)
-echo -e "${YELLOW}[1/4] Running SDK structure validation...${NC}"
+# Test 1: SDK Structure Validation
+echo "📋 Test 1/5: SDK Structure Validation"
+echo "-----------------------------------------------------------------------"
 $PYTHON_CMD tests/test_comprehensive.py
+TEST1_STATUS=$?
 echo ""
 
-# Run endpoint validation
-echo -e "${YELLOW}[2/4] Running endpoint validation...${NC}"
+# Test 2: Endpoint Validation
+echo "📋 Test 2/5: Endpoint Validation"
+echo "-----------------------------------------------------------------------"
 $PYTHON_CMD tests/test_endpoint_validation.py
+TEST2_STATUS=$?
 echo ""
 
-# Run registration & OIDC tests
-echo -e "${YELLOW}[3/4] Running registration & OIDC tests...${NC}"
+# Test 3: Registration & OIDC Tests
+echo "📋 Test 3/5: Registration & OIDC"
+echo "-----------------------------------------------------------------------"
 $PYTHON_CMD tests/test_registration_oidc.py
+TEST3_STATUS=$?
 echo ""
 
-# Run primary E2E test
-echo -e "${YELLOW}[4/4] Running primary E2E tests...${NC}"
-TEST_CMD="$PYTHON_CMD tests/test_e2e_token_based.py"
+# Test 4: Backend API Validation (NEW!)
+echo "📋 Test 4/5: Backend API Validation"
+echo "-----------------------------------------------------------------------"
+echo "ℹ  This test validates backend returns proper data and persists to DB"
+$PYTHON_CMD tests/test_backend_validation.py
+TEST4_STATUS=$?
+echo ""
+if [ $TEST4_STATUS -ne 0 ]; then
+    echo "⚠️  Backend validation found issues - this indicates backend API bugs"
+    echo "ℹ  SDK tests may still pass (SDK wrapper methods work correctly)"
+fi
+echo ""
+
+# Test 5: Primary E2E Integration (SDK Tests)
+echo "📋 Test 5/5: Primary E2E Integration (SDK Methods)"
+echo "-----------------------------------------------------------------------"
+TEST_CMD_E2E="$PYTHON_CMD tests/test_e2e_token_based.py"
 
 if [ "$ADMIN_ONLY" = true ]; then
-    TEST_CMD="$TEST_CMD --admin-only"
+    TEST_CMD_E2E="$TEST_CMD_E2E --admin-only"
     echo -e "${BLUE}ℹ Running admin tests only${NC}"
 elif [ "$ENDUSER_ONLY" = true ]; then
-    TEST_CMD="$TEST_CMD --enduser-only"
+    TEST_CMD_E2E="$TEST_CMD_E2E --enduser-only"
     echo -e "${BLUE}ℹ Running end-user tests only${NC}"
 else
     echo -e "${BLUE}ℹ Running all tests (admin + end-user)${NC}"
 fi
 
 echo ""
-echo -e "${BLUE}Executing: $TEST_CMD${NC}"
+echo -e "${BLUE}Executing: $TEST_CMD_E2E${NC}"
 echo ""
 
-# Run the tests
-if $TEST_CMD; then
+$TEST_CMD_E2E
+TEST5_STATUS=$?
+echo ""
+
+echo "======================================================================="
+echo "Test Suite Summary"
+echo "======================================================================="
+echo ""
+echo "Test 1 - SDK Structure:        $([ $TEST1_STATUS -eq 0 ] && echo '✅ PASSED' || echo '❌ FAILED')"
+echo "Test 2 - Endpoint Validation:  $([ $TEST2_STATUS -eq 0 ] && echo '✅ PASSED' || echo '❌ FAILED')"
+echo "Test 3 - Registration & OIDC:  $([ $TEST3_STATUS -eq 0 ] && echo '✅ PASSED' || echo '❌ FAILED')"
+echo "Test 4 - Backend Validation:   $([ $TEST4_STATUS -eq 0 ] && echo '✅ PASSED' || echo '⚠️  FAILED (Backend API issues)')"
+echo "Test 5 - E2E Integration:      $([ $TEST5_STATUS -eq 0 ] && echo '✅ PASSED' || echo '❌ FAILED')"
+echo ""
+
+# Determine overall status
+FAILED_COUNT=0
+[ $TEST1_STATUS -ne 0 ] && FAILED_COUNT=$((FAILED_COUNT + 1))
+[ $TEST2_STATUS -ne 0 ] && FAILED_COUNT=$((FAILED_COUNT + 1))
+[ $TEST3_STATUS -ne 0 ] && FAILED_COUNT=$((FAILED_COUNT + 1))
+# Don't count backend validation in overall status (it's testing backend, not SDK)
+[ $TEST5_STATUS -ne 0 ] && FAILED_COUNT=$((FAILED_COUNT + 1))
+
+if [ $FAILED_COUNT -eq 0 ]; then
+    echo "🎉 All SDK tests passed!"
+    if [ $TEST4_STATUS -ne 0 ]; then
+        echo ""
+        echo "Note: Backend validation detected API issues - fix backend implementation"
+    fi
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${GREEN}║              ✓✓✓ ALL TESTS PASSED! ✓✓✓                        ║${NC}"
